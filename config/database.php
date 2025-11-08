@@ -10,15 +10,11 @@ class Database
         }
 
         $config = require __DIR__ . '/config.php';
-        $dbConfig = $config['db'];
 
         $dsn = sprintf(
-            '%s:host=%s;port=%s;dbname=%s;charset=%s',
-            $dbConfig['driver'],
-            $dbConfig['host'],
-            $dbConfig['port'],
-            $dbConfig['database'],
-            $dbConfig['charset']
+            'mysql:host=%s;dbname=%s;charset=utf8mb4',
+            $config['db_host'],
+            $config['db_name']
         );
 
         $options = [
@@ -29,14 +25,10 @@ class Database
 
         $this->connection = new PDO(
             $dsn,
-            $dbConfig['username'],
-            $dbConfig['password'],
+            $config['db_user'],
+            $config['db_pass'],
             $options
         );
-
-        if (!empty($dbConfig['collation'])) {
-            $this->connection->exec("SET NAMES '{$dbConfig['charset']}' COLLATE '{$dbConfig['collation']}'");
-        }
 
         return $this->connection;
     }
