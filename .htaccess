@@ -1,0 +1,14 @@
+DirectoryIndex public/index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # جلوگیری از دسترسی مستقیم به پوشه‌های حساس
+    RewriteRule ^(config|database|scripts)/ - [F,L]
+    # هدایت تمام درخواست‌ها به پوشه public در صورتی که فایل یا پوشه‌ای در روت وجود نداشته باشد
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+# جلوگیری از نمایش فهرست فایل‌ها در صورت نبودن index
+Options -Indexes
