@@ -11,10 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    $validUsername = hash_equals($config['admin']['username'], $username);
-    $validPassword = password_verify($password, $config['admin']['password_hash']);
-
-    if ($validUsername && $validPassword) {
+    if ($username === $config['admin']['username'] && $password === $config['admin']['password']) {
         $_SESSION['admin_authenticated'] = true;
         header('Location: /admin/index.php');
         exit;

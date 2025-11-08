@@ -12,13 +12,13 @@ class Database
         $config = require __DIR__ . '/config.php';
         $dbConfig = $config['db'];
 
-        $charset = $dbConfig['charset'] ?? 'utf8mb4';
-
         $dsn = sprintf(
-            'mysql:host=%s;dbname=%s;charset=%s',
+            '%s:host=%s;port=%s;dbname=%s;charset=%s',
+            $dbConfig['driver'],
             $dbConfig['host'],
+            $dbConfig['port'],
             $dbConfig['database'],
-            $charset
+            $dbConfig['charset']
         );
 
         $options = [
@@ -33,6 +33,10 @@ class Database
             $dbConfig['password'],
             $options
         );
+
+        if (!empty($dbConfig['collation'])) {
+            $this->connection->exec("SET NAMES '{$dbConfig['charset']}' COLLATE '{$dbConfig['collation']}'");
+        }
 
         return $this->connection;
     }
