@@ -4,7 +4,7 @@ declare(strict_types=1);
 function admin_check_schema(PDO $db): array
 {
     $requiredTables = [
-        'roles',
+        'hero_roles',
         'heroes',
         'hero_skills',
         'hero_combos',
@@ -30,7 +30,7 @@ function admin_check_schema(PDO $db): array
 
 function admin_fetch_roles(PDO $db): array
 {
-    $stmt = $db->query('SELECT id, name_fa FROM roles ORDER BY sort_order ASC, id ASC');
+    $stmt = $db->query('SELECT id, name_fa FROM hero_roles ORDER BY id ASC');
 
     return $stmt ? $stmt->fetchAll() : [];
 }
@@ -39,7 +39,7 @@ function admin_fetch_heroes(PDO $db): array
 {
     $sql = 'SELECT h.id, h.name_fa, h.name_en, h.image_url, r.name_fa AS role_name
             FROM heroes h
-            LEFT JOIN roles r ON r.id = h.role_id
+            LEFT JOIN hero_roles r ON r.id = h.role_id
             ORDER BY h.name_fa ASC, h.id ASC';
 
     $stmt = $db->query($sql);
@@ -51,7 +51,7 @@ function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
 {
     $heroStmt = $db->prepare('SELECT h.*, r.name_fa AS role_name
         FROM heroes h
-        LEFT JOIN roles r ON r.id = h.role_id
+        LEFT JOIN hero_roles r ON r.id = h.role_id
         WHERE h.id = :id');
     $heroStmt->execute([':id' => $heroId]);
 
