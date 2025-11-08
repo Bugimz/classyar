@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/helpers.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -61,13 +62,13 @@ $allHeroes = $allHeroesStmt->fetchAll();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(mlbb_url('assets/css/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
     <nav class="navbar">
         <div class="brand">آکادمی Mobile Legends</div>
         <div>
-            <a href="/admin/">پنل مدیریت</a>
+            <a href="<?= htmlspecialchars(mlbb_admin_url(), ENT_QUOTES, 'UTF-8') ?>">پنل مدیریت</a>
         </div>
     </nav>
 

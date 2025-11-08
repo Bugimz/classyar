@@ -2,6 +2,7 @@
 session_start();
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/helpers.php';
 
 $config = require __DIR__ . '/../../config/config.php';
 
@@ -16,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($validUsername && $validPassword) {
         $_SESSION['admin_authenticated'] = true;
-        header('Location: /admin/index.php');
+        header('Location: ' . mlbb_admin_url('index.php'));
         exit;
     }
 
@@ -32,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(mlbb_url('assets/css/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body>
     <div class="login-card">

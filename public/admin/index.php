@@ -1,8 +1,10 @@
 <?php
 session_start();
 
+require_once __DIR__ . '/../../config/helpers.php';
+
 if (empty($_SESSION['admin_authenticated'])) {
-    header('Location: /admin/login.php');
+    header('Location: ' . mlbb_admin_url('login.php'));
     exit;
 }
 
@@ -146,7 +148,7 @@ $roles = $db->query('SELECT id, name_fa FROM hero_roles ORDER BY id')->fetchAll(
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars(mlbb_url('assets/css/styles.css'), ENT_QUOTES, 'UTF-8') ?>">
     <style>
         .dashboard-grid {
             display: grid;
@@ -181,8 +183,8 @@ $roles = $db->query('SELECT id, name_fa FROM hero_roles ORDER BY id')->fetchAll(
     <nav class="navbar">
         <div class="brand">داشبورد مدیریت MLBB</div>
         <div>
-            <a href="/" style="margin-left:1rem;">مشاهده سایت</a>
-            <a href="/admin/logout.php">خروج</a>
+            <a href="<?= htmlspecialchars(mlbb_url(), ENT_QUOTES, 'UTF-8') ?>" style="margin-left:1rem;">مشاهده سایت</a>
+            <a href="<?= htmlspecialchars(mlbb_admin_url('logout.php'), ENT_QUOTES, 'UTF-8') ?>">خروج</a>
         </div>
     </nav>
 
