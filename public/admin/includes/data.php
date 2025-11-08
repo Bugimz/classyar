@@ -1,6 +1,33 @@
 <?php
 declare(strict_types=1);
 
+function admin_check_schema(PDO $db): array
+{
+    $requiredTables = [
+        'roles',
+        'heroes',
+        'hero_skills',
+        'hero_combos',
+        'hero_tips',
+        'hero_counters',
+        'hero_strengths',
+        'hero_weaknesses',
+    ];
+
+    $missing = [];
+
+    foreach ($requiredTables as $table) {
+        $quoted = $db->quote($table);
+        $stmt = $db->query("SHOW TABLES LIKE {$quoted}");
+
+        if (!$stmt || $stmt->fetchColumn() === false) {
+            $missing[] = $table;
+        }
+    }
+
+    return $missing;
+}
+
 function admin_fetch_roles(PDO $db): array
 {
     $stmt = $db->query('SELECT id, name_fa FROM roles ORDER BY sort_order ASC, id ASC');

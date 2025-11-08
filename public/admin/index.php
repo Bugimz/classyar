@@ -5,6 +5,16 @@ require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/includes/data.php';
 require_once __DIR__ . '/includes/actions.php';
 
+$missingTables = admin_check_schema($db);
+if (!empty($missingTables)) {
+    require __DIR__ . '/partials/layout_start.php';
+    $schemaIssues = $missingTables;
+    require __DIR__ . '/partials/schema_warning.php';
+    require __DIR__ . '/partials/layout_end.php';
+
+    return;
+}
+
 $roles = admin_fetch_roles($db);
 $heroes = admin_fetch_heroes($db);
 
