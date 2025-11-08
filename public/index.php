@@ -68,7 +68,7 @@ $allHeroes = $allHeroesStmt->fetchAll();
     <nav class="navbar">
         <div class="brand">آکادمی Mobile Legends</div>
         <div>
-            <a href="<?= htmlspecialchars(mlbb_admin_url(), ENT_QUOTES, 'UTF-8') ?>">پنل مدیریت</a>
+            <a href="<?= htmlspecialchars(mlbb_admin_url('index.php'), ENT_QUOTES, 'UTF-8') ?>">پنل مدیریت</a>
         </div>
     </nav>
 
