@@ -35,6 +35,38 @@ function admin_fetch_roles(PDO $db): array
     return $stmt ? $stmt->fetchAll() : [];
 }
 
+function admin_fetch_dashboard_stats(PDO $db): array
+{
+    $stats = [
+        'roles' => 0,
+        'heroes' => 0,
+        'skills' => 0,
+        'combos' => 0,
+        'tips' => 0,
+        'counters' => 0,
+        'strengths' => 0,
+        'weaknesses' => 0,
+    ];
+
+    $queries = [
+        'roles' => 'SELECT COUNT(*) FROM hero_roles',
+        'heroes' => 'SELECT COUNT(*) FROM heroes',
+        'skills' => 'SELECT COUNT(*) FROM hero_skills',
+        'combos' => 'SELECT COUNT(*) FROM hero_combos',
+        'tips' => 'SELECT COUNT(*) FROM hero_tips',
+        'counters' => 'SELECT COUNT(*) FROM hero_counters',
+        'strengths' => 'SELECT COUNT(*) FROM hero_strengths',
+        'weaknesses' => 'SELECT COUNT(*) FROM hero_weaknesses',
+    ];
+
+    foreach ($queries as $key => $sql) {
+        $stmt = $db->query($sql);
+        $stats[$key] = $stmt ? (int) $stmt->fetchColumn() : 0;
+    }
+
+    return $stats;
+}
+
 function admin_fetch_heroes(PDO $db): array
 {
     $sql = 'SELECT h.id, h.name_fa, h.name_en, h.image_url, r.name_fa AS role_name

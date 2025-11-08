@@ -17,6 +17,7 @@ if (!empty($missingTables)) {
 
 $roles = admin_fetch_roles($db);
 $heroes = admin_fetch_heroes($db);
+$stats = admin_fetch_dashboard_stats($db);
 
 $difficulties = [
     'Easy' => 'آسان',
@@ -33,6 +34,8 @@ $activeHeroBundle = $activeHeroId > 0 ? admin_fetch_hero_bundle($db, $activeHero
 
 require __DIR__ . '/partials/layout_start.php';
 require __DIR__ . '/partials/flash.php';
+require __DIR__ . '/partials/dashboard/metrics.php';
+require __DIR__ . '/partials/hero/list.php';
 require __DIR__ . '/partials/hero/create_form.php';
 require __DIR__ . '/partials/hero/manage.php';
 require __DIR__ . '/partials/layout_end.php';

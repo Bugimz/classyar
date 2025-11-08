@@ -95,6 +95,43 @@ try {
             admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'manage');
             break;
 
+        case 'delete_hero':
+            $heroId = (int) ($_POST['hero_id'] ?? 0);
+
+            if ($heroId <= 0) {
+                throw new RuntimeException('شناسه هیرو نامعتبر است.');
+            }
+
+            $db->beginTransaction();
+
+            $tables = [
+                'hero_skills',
+                'hero_combos',
+                'hero_tips',
+                'hero_counters',
+                'hero_strengths',
+                'hero_weaknesses',
+            ];
+
+            foreach ($tables as $table) {
+                $stmt = $db->prepare("DELETE FROM {$table} WHERE hero_id = :hero_id");
+                $stmt->execute([':hero_id' => $heroId]);
+            }
+
+            $heroDelete = $db->prepare('DELETE FROM heroes WHERE id = :id');
+            $heroDelete->execute([':id' => $heroId]);
+
+            if ($heroDelete->rowCount() === 0) {
+                $db->rollBack();
+                throw new RuntimeException('هیرو مورد نظر یافت نشد.');
+            }
+
+            $db->commit();
+
+            admin_flash('success', 'هیرو و تمام اطلاعات وابسته با موفقیت حذف شد.');
+            admin_redirect('index.php', [], $anchor ?: 'hero-list');
+            break;
+
         case 'add_skill':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
             $imagePath = admin_handle_image_upload('skill_image', 'skills');
@@ -349,6 +386,9 @@ try {
             admin_redirect('index.php', []);
     }
 } catch (Throwable $throwable) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
     error_log('Admin action error: ' . $throwable->getMessage());
 
     $heroId = isset($heroId) ? (int) $heroId : null;
