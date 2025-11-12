@@ -568,6 +568,20 @@ input[type="file"] {
     gap: 0.8rem;
 }
 
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.category-list .management-card--inline {
+    margin-bottom: 0.4rem;
+}
+
+.category-list .inline-form {
+    align-self: flex-end;
+}
+
 .inline-form {
     display: inline-flex;
 }

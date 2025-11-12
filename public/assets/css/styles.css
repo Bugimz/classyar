@@ -264,6 +264,32 @@ a:hover {
     color: rgba(148, 163, 184, 0.9);
 }
 
+.counter-entry__link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.counter-entry__placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: rgba(129, 140, 248, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: rgba(191, 219, 254, 0.9);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.35);
+}
+
+.counter-entry__category {
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    color: rgba(129, 230, 217, 0.9);
+}
+
 .counter-entries--item .counter-entry {
     min-width: 200px;
 }
@@ -368,3 +394,14 @@ button.primary:hover {
     text-align: center;
     margin-bottom: 2rem;
 }
+.item-meta {
+    line-height: 1.8;
+    color: rgba(226, 232, 240, 0.92);
+    margin-bottom: 1rem;
+}
+
+.item-meta strong {
+    font-weight: 600;
+    color: rgba(191, 219, 254, 0.95);
+}
+

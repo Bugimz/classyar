@@ -75,12 +75,33 @@ $counters = [];
 if ($counterGroupsRaw) {
     $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroupsRaw);
     $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
-    $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+    $entitySql = "SELECT e.*,
+            h.name_fa AS hero_name_fa, h.name_en AS hero_name_en, h.image_url AS hero_image_url,
+            i.name_fa AS item_name_fa, i.name_en AS item_name_en, i.image_url AS item_image_url,
+            c.name_fa AS item_category_name_fa, c.name_en AS item_category_name_en
+        FROM hero_counter_entities e
+        LEFT JOIN heroes h ON h.id = e.target_hero_id
+        LEFT JOIN items i ON i.id = e.target_item_id
+        LEFT JOIN item_categories c ON c.id = i.category_id
+        WHERE e.group_id IN ({$placeholder})
+        ORDER BY e.sort_order ASC, e.id ASC";
+    $entityStmt = $db->prepare($entitySql);
     $entityStmt->execute($groupIds);
 
     $entitiesByGroup = [];
     while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
-        $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+        $groupId = (int) ($entity['group_id'] ?? 0);
+        if ($groupId === 0) {
+            continue;
+        }
+
+        $entity['display_name_fa'] = $entity['name_fa'] ?: ($entity['hero_name_fa'] ?? ($entity['item_name_fa'] ?? null));
+        $entity['display_name_en'] = $entity['name_en'] ?: ($entity['hero_name_en'] ?? ($entity['item_name_en'] ?? null));
+        $entity['display_image'] = $entity['image_url'] ?: ($entity['hero_image_url'] ?? ($entity['item_image_url'] ?? null));
+        $entity['item_category_name_fa'] = $entity['item_category_name_fa'] ?? null;
+        $entity['item_category_name_en'] = $entity['item_category_name_en'] ?? null;
+
+        $entitiesByGroup[$groupId][] = $entity;
     }
 
     foreach ($counterGroupsRaw as $group) {
@@ -260,24 +281,49 @@ $allHeroes = $allHeroesStmt->fetchAll();
                                 <?php if (!empty($group['entities'])): ?>
                                     <?php foreach ($group['entities'] as $entity): ?>
                                         <?php
-                                            $primaryName = $entity['name_fa'] ?? '';
-                                            if ($primaryName === '') {
-                                                $primaryName = $entity['name_en'] ?? '';
+                                            $primaryName = $entity['display_name_fa'] ?? '';
+                                            if ($primaryName === '' && !empty($entity['display_name_en'])) {
+                                                $primaryName = $entity['display_name_en'];
                                             }
-                                            $secondaryName = $entity['name_en'] ?? '';
+                                            $secondaryName = $entity['display_name_en'] ?? '';
                                             $showSecondary = $secondaryName !== '' && $secondaryName !== $primaryName;
+                                            $imageSrc = $entity['display_image'] ?? '';
+                                            $linkUrl = null;
+                                            if (!empty($entity['target_hero_id'])) {
+                                                $linkUrl = mlbb_url('index.php?id=' . (int) $entity['target_hero_id']);
+                                            } elseif (!empty($entity['target_item_id'])) {
+                                                $linkUrl = mlbb_url('item.php?id=' . (int) $entity['target_item_id']);
+                                            }
+                                            $categoryLabel = null;
+                                            if (!empty($entity['target_item_id']) && !empty($entity['item_category_name_fa'])) {
+                                                $categoryLabel = $entity['item_category_name_fa'];
+                                            } elseif (!empty($entity['target_item_id']) && !empty($entity['item_category_name_en'])) {
+                                                $categoryLabel = $entity['item_category_name_en'];
+                                            }
+                                            $placeholderSource = $primaryName !== '' ? $primaryName : $secondaryName;
+                                            if ($placeholderSource === '') {
+                                                $placeholderSource = '?';
+                                            }
+                                            $placeholderChar = function_exists('mb_substr') ? mb_substr($placeholderSource, 0, 1, 'UTF-8') : substr($placeholderSource, 0, 1);
                                         ?>
-                                        <figure class="counter-entry">
-                                            <?php if (!empty($entity['image_url'])): ?>
-                                                <img src="<?= htmlspecialchars($entity['image_url']) ?>" alt="<?= htmlspecialchars($primaryName !== '' ? $primaryName : $secondaryName) ?>">
-                                            <?php endif; ?>
-                                            <figcaption>
-                                                <span><?= htmlspecialchars($primaryName) ?></span>
-                                                <?php if ($showSecondary): ?>
-                                                    <small><?= htmlspecialchars($secondaryName) ?></small>
+                                        <?php if ($linkUrl): ?><a href="<?= htmlspecialchars($linkUrl, ENT_QUOTES, 'UTF-8') ?>" class="counter-entry__link"><?php endif; ?>
+                                            <figure class="counter-entry">
+                                                <?php if ($imageSrc !== ''): ?>
+                                                    <img src="<?= htmlspecialchars($imageSrc, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($primaryName !== '' ? $primaryName : $secondaryName, ENT_QUOTES, 'UTF-8') ?>">
+                                                <?php else: ?>
+                                                    <div class="counter-entry__placeholder"><?= htmlspecialchars($placeholderChar ?: '?', ENT_QUOTES, 'UTF-8') ?></div>
                                                 <?php endif; ?>
-                                            </figcaption>
-                                        </figure>
+                                                <figcaption>
+                                                    <span><?= htmlspecialchars($primaryName !== '' ? $primaryName : $secondaryName, ENT_QUOTES, 'UTF-8') ?></span>
+                                                    <?php if ($showSecondary): ?>
+                                                        <small><?= htmlspecialchars($secondaryName, ENT_QUOTES, 'UTF-8') ?></small>
+                                                    <?php endif; ?>
+                                                    <?php if ($categoryLabel !== null): ?>
+                                                        <small class="counter-entry__category"><?= htmlspecialchars($categoryLabel, ENT_QUOTES, 'UTF-8') ?></small>
+                                                    <?php endif; ?>
+                                                </figcaption>
+                                            </figure>
+                                        <?php if ($linkUrl): ?></a><?php endif; ?>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <p class="counter-empty">موردی ثبت نشده است.</p>

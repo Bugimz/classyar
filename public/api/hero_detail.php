@@ -72,12 +72,61 @@ try {
     if ($counterGroupsRaw) {
         $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroupsRaw);
         $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
-        $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+        $entitySql = "SELECT e.*,
+                h.name_fa AS hero_name_fa, h.name_en AS hero_name_en, h.image_url AS hero_image_url,
+                i.name_fa AS item_name_fa, i.name_en AS item_name_en, i.image_url AS item_image_url, i.slug AS item_slug,
+                c.name_fa AS item_category_name_fa, c.name_en AS item_category_name_en
+            FROM hero_counter_entities e
+            LEFT JOIN heroes h ON h.id = e.target_hero_id
+            LEFT JOIN items i ON i.id = e.target_item_id
+            LEFT JOIN item_categories c ON c.id = i.category_id
+            WHERE e.group_id IN ({$placeholder})
+            ORDER BY e.sort_order ASC, e.id ASC";
+        $entityStmt = $db->prepare($entitySql);
         $entityStmt->execute($groupIds);
 
         $entitiesByGroup = [];
         while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
-            $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+            $groupId = (int) ($entity['group_id'] ?? 0);
+            if ($groupId === 0) {
+                continue;
+            }
+
+            $entity['display_name_fa'] = $entity['name_fa'] ?: ($entity['hero_name_fa'] ?? ($entity['item_name_fa'] ?? null));
+            $entity['display_name_en'] = $entity['name_en'] ?: ($entity['hero_name_en'] ?? ($entity['item_name_en'] ?? null));
+            $entity['display_image'] = $entity['image_url'] ?: ($entity['hero_image_url'] ?? ($entity['item_image_url'] ?? null));
+
+            $entity['target_type'] = 'custom';
+            if (!empty($entity['target_item_id'])) {
+                $entity['target_type'] = 'item';
+            } elseif (!empty($entity['target_hero_id'])) {
+                $entity['target_type'] = 'hero';
+            }
+
+            $entity['target_hero'] = null;
+            if (!empty($entity['target_hero_id'])) {
+                $entity['target_hero'] = [
+                    'id' => (int) $entity['target_hero_id'],
+                    'name_fa' => $entity['hero_name_fa'],
+                    'name_en' => $entity['hero_name_en'],
+                    'image_url' => $entity['hero_image_url'],
+                ];
+            }
+
+            $entity['target_item'] = null;
+            if (!empty($entity['target_item_id'])) {
+                $entity['target_item'] = [
+                    'id' => (int) $entity['target_item_id'],
+                    'slug' => $entity['item_slug'],
+                    'name_fa' => $entity['item_name_fa'],
+                    'name_en' => $entity['item_name_en'],
+                    'image_url' => $entity['item_image_url'],
+                    'category_name_fa' => $entity['item_category_name_fa'],
+                    'category_name_en' => $entity['item_category_name_en'],
+                ];
+            }
+
+            $entitiesByGroup[$groupId][] = $entity;
         }
 
         foreach ($counterGroupsRaw as $group) {

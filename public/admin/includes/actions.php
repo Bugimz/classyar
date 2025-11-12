@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 $anchor = admin_filter_anchor($_POST['redirect_anchor'] ?? '');
-$allowedReturnTargets = ['index.php', 'hero.php', 'hero_create.php'];
+$allowedReturnTargets = ['index.php', 'hero.php', 'hero_create.php', 'items.php'];
 $returnTo = $_POST['return_to'] ?? 'index.php';
 if (!in_array($returnTo, $allowedReturnTargets, true)) {
     $returnTo = 'index.php';
@@ -415,16 +415,73 @@ try {
         case 'add_counter_entity':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
             $groupId = (int) ($_POST['group_id'] ?? 0);
+
+            $groupTypeStmt = $db->prepare('SELECT group_type FROM hero_counter_groups WHERE id = :id LIMIT 1');
+            $groupTypeStmt->execute([':id' => $groupId]);
+            $groupType = $groupTypeStmt->fetchColumn() ?: 'hero';
+
+            $targetHeroId = null;
+            $targetItemId = null;
+
+            if ($groupType === 'hero') {
+                $selectedHero = (int) ($_POST['target_hero_id'] ?? 0);
+                if ($selectedHero > 0) {
+                    $targetHeroId = $selectedHero;
+                }
+            } else {
+                $selectedItem = (int) ($_POST['target_item_id'] ?? 0);
+                if ($selectedItem > 0) {
+                    $targetItemId = $selectedItem;
+                }
+            }
+
             $imagePath = admin_handle_image_upload('entity_image', 'counters');
             $manualImage = admin_sanitize($_POST['image_url'] ?? '');
-            $imageUrl = $imagePath ?? $manualImage;
+            $imageUrl = $imagePath ?? ($manualImage !== '' ? $manualImage : null);
 
-            $stmt = $db->prepare('INSERT INTO hero_counter_entities (group_id, name_en, name_fa, image_url, sort_order)
-                VALUES (:group_id, :name_en, :name_fa, :image_url, :sort_order)');
+            $nameFa = admin_sanitize($_POST['name_fa'] ?? '');
+            $nameEn = admin_sanitize($_POST['name_en'] ?? '');
+
+            if ($targetHeroId !== null) {
+                $heroLookup = $db->prepare('SELECT name_fa, name_en, image_url FROM heroes WHERE id = :id');
+                $heroLookup->execute([':id' => $targetHeroId]);
+                if ($heroRow = $heroLookup->fetch(PDO::FETCH_ASSOC)) {
+                    if ($nameFa === '' && !empty($heroRow['name_fa'])) {
+                        $nameFa = $heroRow['name_fa'];
+                    }
+                    if ($nameEn === '' && !empty($heroRow['name_en'])) {
+                        $nameEn = $heroRow['name_en'];
+                    }
+                    if ($imageUrl === null && !empty($heroRow['image_url'])) {
+                        $imageUrl = $heroRow['image_url'];
+                    }
+                }
+            }
+
+            if ($targetItemId !== null) {
+                $itemLookup = $db->prepare('SELECT name_fa, name_en, image_url FROM items WHERE id = :id');
+                $itemLookup->execute([':id' => $targetItemId]);
+                if ($itemRow = $itemLookup->fetch(PDO::FETCH_ASSOC)) {
+                    if ($nameFa === '' && !empty($itemRow['name_fa'])) {
+                        $nameFa = $itemRow['name_fa'];
+                    }
+                    if ($nameEn === '' && !empty($itemRow['name_en'])) {
+                        $nameEn = $itemRow['name_en'];
+                    }
+                    if ($imageUrl === null && !empty($itemRow['image_url'])) {
+                        $imageUrl = $itemRow['image_url'];
+                    }
+                }
+            }
+
+            $stmt = $db->prepare('INSERT INTO hero_counter_entities (group_id, target_hero_id, target_item_id, name_en, name_fa, image_url, sort_order)
+                VALUES (:group_id, :target_hero_id, :target_item_id, :name_en, :name_fa, :image_url, :sort_order)');
             $stmt->execute([
                 ':group_id' => $groupId,
-                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
-                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':target_hero_id' => $targetHeroId,
+                ':target_item_id' => $targetItemId,
+                ':name_en' => $nameEn !== '' ? $nameEn : null,
+                ':name_fa' => $nameFa !== '' ? $nameFa : null,
                 ':image_url' => $imageUrl,
                 ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
             ]);
@@ -437,19 +494,81 @@ try {
             $heroId = (int) ($_POST['hero_id'] ?? 0);
             $groupId = (int) ($_POST['group_id'] ?? 0);
             $entityId = (int) ($_POST['entity_id'] ?? 0);
+
+            $groupTypeStmt = $db->prepare('SELECT group_type FROM hero_counter_groups WHERE id = :id LIMIT 1');
+            $groupTypeStmt->execute([':id' => $groupId]);
+            $groupType = $groupTypeStmt->fetchColumn() ?: 'hero';
+
+            $existingStmt = $db->prepare('SELECT image_url FROM hero_counter_entities WHERE id = :id AND group_id = :group_id');
+            $existingStmt->execute([':id' => $entityId, ':group_id' => $groupId]);
+            $existing = $existingStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            $targetHeroId = null;
+            $targetItemId = null;
+            if ($groupType === 'hero') {
+                $selectedHero = (int) ($_POST['target_hero_id'] ?? 0);
+                if ($selectedHero > 0) {
+                    $targetHeroId = $selectedHero;
+                }
+            } else {
+                $selectedItem = (int) ($_POST['target_item_id'] ?? 0);
+                if ($selectedItem > 0) {
+                    $targetItemId = $selectedItem;
+                }
+            }
+
             $imagePath = admin_handle_image_upload('entity_image', 'counters');
             $manualImage = admin_sanitize($_POST['image_url'] ?? '');
-            $imageUrl = $imagePath ?? $manualImage;
+            $imageUrl = $imagePath ?? ($manualImage !== '' ? $manualImage : ($existing['image_url'] ?? null));
+
+            $nameFa = admin_sanitize($_POST['name_fa'] ?? '');
+            $nameEn = admin_sanitize($_POST['name_en'] ?? '');
+
+            if ($targetHeroId !== null) {
+                $heroLookup = $db->prepare('SELECT name_fa, name_en, image_url FROM heroes WHERE id = :id');
+                $heroLookup->execute([':id' => $targetHeroId]);
+                if ($heroRow = $heroLookup->fetch(PDO::FETCH_ASSOC)) {
+                    if ($nameFa === '' && !empty($heroRow['name_fa'])) {
+                        $nameFa = $heroRow['name_fa'];
+                    }
+                    if ($nameEn === '' && !empty($heroRow['name_en'])) {
+                        $nameEn = $heroRow['name_en'];
+                    }
+                    if ($imageUrl === null && !empty($heroRow['image_url'])) {
+                        $imageUrl = $heroRow['image_url'];
+                    }
+                }
+            }
+
+            if ($targetItemId !== null) {
+                $itemLookup = $db->prepare('SELECT name_fa, name_en, image_url FROM items WHERE id = :id');
+                $itemLookup->execute([':id' => $targetItemId]);
+                if ($itemRow = $itemLookup->fetch(PDO::FETCH_ASSOC)) {
+                    if ($nameFa === '' && !empty($itemRow['name_fa'])) {
+                        $nameFa = $itemRow['name_fa'];
+                    }
+                    if ($nameEn === '' && !empty($itemRow['name_en'])) {
+                        $nameEn = $itemRow['name_en'];
+                    }
+                    if ($imageUrl === null && !empty($itemRow['image_url'])) {
+                        $imageUrl = $itemRow['image_url'];
+                    }
+                }
+            }
 
             $stmt = $db->prepare('UPDATE hero_counter_entities
-                SET name_en = :name_en,
+                SET target_hero_id = :target_hero_id,
+                    target_item_id = :target_item_id,
+                    name_en = :name_en,
                     name_fa = :name_fa,
                     image_url = :image_url,
                     sort_order = :sort_order
                 WHERE id = :id AND group_id = :group_id');
             $stmt->execute([
-                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
-                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':target_hero_id' => $targetHeroId,
+                ':target_item_id' => $targetItemId,
+                ':name_en' => $nameEn !== '' ? $nameEn : null,
+                ':name_fa' => $nameFa !== '' ? $nameFa : null,
                 ':image_url' => $imageUrl,
                 ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
                 ':id' => $entityId,
@@ -459,7 +578,6 @@ try {
             admin_flash('success', 'آیتم/هیروی کانتر به‌روزرسانی شد.');
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
             break;
-
         case 'delete_counter_entity':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
             $groupId = (int) ($_POST['group_id'] ?? 0);
@@ -473,6 +591,154 @@ try {
 
             admin_flash('success', 'آیتم/هیروی کانتر حذف شد.');
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
+            break;
+
+        case 'add_item_category':
+            $nameFa = admin_sanitize($_POST['name_fa'] ?? '');
+            $nameEn = admin_sanitize($_POST['name_en'] ?? '');
+            $slug = admin_sanitize($_POST['slug'] ?? '');
+            $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+
+            if ($slug === '') {
+                throw new RuntimeException('اسلاگ دسته‌بندی الزامی است.');
+            }
+
+            $stmt = $db->prepare('INSERT INTO item_categories (slug, name_en, name_fa, sort_order) VALUES (:slug, :name_en, :name_fa, :sort_order)');
+            $stmt->execute([
+                ':slug' => $slug !== '' ? $slug : null,
+                ':name_en' => $nameEn !== '' ? $nameEn : $nameFa,
+                ':name_fa' => $nameFa !== '' ? $nameFa : $nameEn,
+                ':sort_order' => $sortOrder,
+            ]);
+
+            admin_flash('success', 'دسته‌بندی آیتم ثبت شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'categories');
+            break;
+
+        case 'update_item_category':
+            $categoryId = (int) ($_POST['category_id'] ?? 0);
+            $nameFa = admin_sanitize($_POST['name_fa'] ?? '');
+            $nameEn = admin_sanitize($_POST['name_en'] ?? '');
+            $slug = admin_sanitize($_POST['slug'] ?? '');
+            $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+
+            if ($categoryId <= 0) {
+                throw new RuntimeException('شناسه دسته‌بندی نامعتبر است.');
+            }
+
+            if ($slug === '') {
+                throw new RuntimeException('اسلاگ دسته‌بندی الزامی است.');
+            }
+
+            $stmt = $db->prepare('UPDATE item_categories SET slug = :slug, name_en = :name_en, name_fa = :name_fa, sort_order = :sort_order WHERE id = :id');
+            $stmt->execute([
+                ':slug' => $slug !== '' ? $slug : null,
+                ':name_en' => $nameEn !== '' ? $nameEn : $nameFa,
+                ':name_fa' => $nameFa !== '' ? $nameFa : $nameEn,
+                ':sort_order' => $sortOrder,
+                ':id' => $categoryId,
+            ]);
+
+            admin_flash('success', 'دسته‌بندی به‌روزرسانی شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'categories');
+            break;
+
+        case 'delete_item_category':
+            $categoryId = (int) ($_POST['category_id'] ?? 0);
+
+            if ($categoryId <= 0) {
+                throw new RuntimeException('شناسه دسته‌بندی نامعتبر است.');
+            }
+
+            $itemCountStmt = $db->prepare('SELECT COUNT(*) FROM items WHERE category_id = :id');
+            $itemCountStmt->execute([':id' => $categoryId]);
+            $itemCount = (int) $itemCountStmt->fetchColumn();
+
+            if ($itemCount > 0) {
+                admin_flash('error', 'ابتدا آیتم‌های این دسته را حذف یا جابه‌جا کنید.');
+                admin_redirect($returnTo, [], $anchor ?: 'categories');
+            }
+            $stmt = $db->prepare('DELETE FROM item_categories WHERE id = :id');
+            $stmt->execute([':id' => $categoryId]);
+
+            admin_flash('success', 'دسته‌بندی حذف شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'categories');
+            break;
+
+        case 'add_item':
+            $categoryId = (int) ($_POST['category_id'] ?? 0);
+
+            if ($categoryId <= 0) {
+                throw new RuntimeException('انتخاب دسته‌بندی آیتم الزامی است.');
+            }
+
+            $imagePath = admin_handle_image_upload('item_image', 'items');
+            $stmt = $db->prepare('INSERT INTO items (category_id, slug, name_en, name_fa, tier, gold_cost, stats_en, stats_fa, passive_en, passive_fa, active_en, active_fa, description_en, description_fa, image_url) VALUES (:category_id, :slug, :name_en, :name_fa, :tier, :gold_cost, :stats_en, :stats_fa, :passive_en, :passive_fa, :active_en, :active_fa, :description_en, :description_fa, :image_url)');
+            $stmt->execute([
+                ':category_id' => $categoryId,
+                ':slug' => admin_sanitize($_POST['slug'] ?? ''),
+                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
+                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':tier' => admin_sanitize($_POST['tier'] ?? ''),
+                ':gold_cost' => $_POST['gold_cost'] !== '' ? (int) $_POST['gold_cost'] : null,
+                ':stats_en' => ($_POST['stats_en'] ?? '') !== '' ? $_POST['stats_en'] : null,
+                ':stats_fa' => ($_POST['stats_fa'] ?? '') !== '' ? $_POST['stats_fa'] : null,
+                ':passive_en' => ($_POST['passive_en'] ?? '') !== '' ? $_POST['passive_en'] : null,
+                ':passive_fa' => ($_POST['passive_fa'] ?? '') !== '' ? $_POST['passive_fa'] : null,
+                ':active_en' => ($_POST['active_en'] ?? '') !== '' ? $_POST['active_en'] : null,
+                ':active_fa' => ($_POST['active_fa'] ?? '') !== '' ? $_POST['active_fa'] : null,
+                ':description_en' => ($_POST['description_en'] ?? '') !== '' ? $_POST['description_en'] : null,
+                ':description_fa' => ($_POST['description_fa'] ?? '') !== '' ? $_POST['description_fa'] : null,
+                ':image_url' => $imagePath ?? (admin_sanitize($_POST['image_url'] ?? '') ?: null),
+            ]);
+
+            admin_flash('success', 'آیتم جدید ذخیره شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'items');
+            break;
+
+        case 'update_item':
+            $itemId = (int) ($_POST['item_id'] ?? 0);
+            $categoryId = (int) ($_POST['category_id'] ?? 0);
+
+            if ($itemId <= 0 || $categoryId <= 0) {
+                throw new RuntimeException('اطلاعات آیتم ناقص است.');
+            }
+            $imagePath = admin_handle_image_upload('item_image', 'items');
+
+            $stmt = $db->prepare('UPDATE items SET category_id = :category_id, slug = :slug, name_en = :name_en, name_fa = :name_fa, tier = :tier, gold_cost = :gold_cost, stats_en = :stats_en, stats_fa = :stats_fa, passive_en = :passive_en, passive_fa = :passive_fa, active_en = :active_en, active_fa = :active_fa, description_en = :description_en, description_fa = :description_fa, image_url = COALESCE(:image_url, image_url) WHERE id = :id');
+            $stmt->execute([
+                ':category_id' => $categoryId,
+                ':slug' => admin_sanitize($_POST['slug'] ?? ''),
+                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
+                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':tier' => admin_sanitize($_POST['tier'] ?? ''),
+                ':gold_cost' => $_POST['gold_cost'] !== '' ? (int) $_POST['gold_cost'] : null,
+                ':stats_en' => ($_POST['stats_en'] ?? '') !== '' ? $_POST['stats_en'] : null,
+                ':stats_fa' => ($_POST['stats_fa'] ?? '') !== '' ? $_POST['stats_fa'] : null,
+                ':passive_en' => ($_POST['passive_en'] ?? '') !== '' ? $_POST['passive_en'] : null,
+                ':passive_fa' => ($_POST['passive_fa'] ?? '') !== '' ? $_POST['passive_fa'] : null,
+                ':active_en' => ($_POST['active_en'] ?? '') !== '' ? $_POST['active_en'] : null,
+                ':active_fa' => ($_POST['active_fa'] ?? '') !== '' ? $_POST['active_fa'] : null,
+                ':description_en' => ($_POST['description_en'] ?? '') !== '' ? $_POST['description_en'] : null,
+                ':description_fa' => ($_POST['description_fa'] ?? '') !== '' ? $_POST['description_fa'] : null,
+                ':image_url' => $imagePath ?? (admin_sanitize($_POST['image_url'] ?? '') ?: null),
+                ':id' => $itemId,
+            ]);
+
+            admin_flash('success', 'آیتم به‌روزرسانی شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'items');
+            break;
+
+        case 'delete_item':
+            $itemId = (int) ($_POST['item_id'] ?? 0);
+            if ($itemId <= 0) {
+                throw new RuntimeException('شناسه آیتم نامعتبر است.');
+            }
+            $stmt = $db->prepare('DELETE FROM items WHERE id = :id');
+            $stmt->execute([':id' => $itemId]);
+
+            admin_flash('success', 'آیتم حذف شد.');
+            admin_redirect($returnTo, [], $anchor ?: 'items');
             break;
 
         case 'add_strength':

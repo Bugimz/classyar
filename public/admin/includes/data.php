@@ -9,6 +9,8 @@ function admin_check_schema(PDO $db): array
         'hero_skills',
         'hero_combos',
         'hero_combo_steps',
+        'item_categories',
+        'items',
         'hero_tips',
         'hero_counter_groups',
         'hero_counter_entities',
@@ -37,6 +39,25 @@ function admin_fetch_roles(PDO $db): array
     return $stmt ? $stmt->fetchAll() : [];
 }
 
+function admin_fetch_item_categories(PDO $db): array
+{
+    $stmt = $db->query('SELECT id, slug, name_fa, name_en FROM item_categories ORDER BY sort_order ASC, id ASC');
+
+    return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+}
+
+function admin_fetch_items(PDO $db): array
+{
+    $sql = 'SELECT i.*, c.name_fa AS category_name_fa, c.name_en AS category_name_en
+            FROM items i
+            LEFT JOIN item_categories c ON c.id = i.category_id
+            ORDER BY i.name_fa ASC, i.name_en ASC';
+
+    $stmt = $db->query($sql);
+
+    return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+}
+
 function admin_fetch_dashboard_stats(PDO $db): array
 {
     $stats = [
@@ -50,6 +71,8 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'counter_entities' => 0,
         'strengths' => 0,
         'weaknesses' => 0,
+        'item_categories' => 0,
+        'items' => 0,
     ];
 
     $queries = [
@@ -63,6 +86,8 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'counter_entities' => 'SELECT COUNT(*) FROM hero_counter_entities',
         'strengths' => 'SELECT COUNT(*) FROM hero_strengths',
         'weaknesses' => 'SELECT COUNT(*) FROM hero_weaknesses',
+        'item_categories' => 'SELECT COUNT(*) FROM item_categories',
+        'items' => 'SELECT COUNT(*) FROM items',
     ];
 
     foreach ($queries as $key => $sql) {
@@ -123,6 +148,17 @@ function admin_fetch_heroes(PDO $db): array
     unset($heroRow);
 
     return $heroes;
+}
+
+function admin_fetch_counter_reference_lists(PDO $db): array
+{
+    $heroStmt = $db->query('SELECT id, name_fa, name_en, image_url FROM heroes ORDER BY name_fa ASC, name_en ASC');
+    $itemStmt = $db->query('SELECT id, name_fa, name_en, image_url FROM items ORDER BY name_fa ASC, name_en ASC');
+
+    return [
+        'heroes' => $heroStmt ? $heroStmt->fetchAll(PDO::FETCH_ASSOC) : [],
+        'items' => $itemStmt ? $itemStmt->fetchAll(PDO::FETCH_ASSOC) : [],
+    ];
 }
 
 function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
@@ -197,12 +233,45 @@ function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
     if ($counterGroups) {
         $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroups);
         $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
-        $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+        $entitySql = "SELECT e.*, h.name_fa AS target_hero_name_fa, h.name_en AS target_hero_name_en, h.image_url AS target_hero_image_url,
+                i.name_fa AS target_item_name_fa, i.name_en AS target_item_name_en, i.image_url AS target_item_image_url
+            FROM hero_counter_entities e
+            LEFT JOIN heroes h ON h.id = e.target_hero_id
+            LEFT JOIN items i ON i.id = e.target_item_id
+            WHERE e.group_id IN ({$placeholder})
+            ORDER BY e.sort_order ASC, e.id ASC";
+
+        $entityStmt = $db->prepare($entitySql);
         $entityStmt->execute($groupIds);
 
         $entitiesByGroup = [];
         while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
-            $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+            $groupId = (int) ($entity['group_id'] ?? 0);
+            if ($groupId === 0) {
+                continue;
+            }
+
+            $entity['target_hero'] = null;
+            if (!empty($entity['target_hero_id'])) {
+                $entity['target_hero'] = [
+                    'id' => (int) $entity['target_hero_id'],
+                    'name_fa' => $entity['target_hero_name_fa'],
+                    'name_en' => $entity['target_hero_name_en'],
+                    'image_url' => $entity['target_hero_image_url'],
+                ];
+            }
+
+            $entity['target_item'] = null;
+            if (!empty($entity['target_item_id'])) {
+                $entity['target_item'] = [
+                    'id' => (int) $entity['target_item_id'],
+                    'name_fa' => $entity['target_item_name_fa'],
+                    'name_en' => $entity['target_item_name_en'],
+                    'image_url' => $entity['target_item_image_url'],
+                ];
+            }
+
+            $entitiesByGroup[$groupId][] = $entity;
         }
 
         foreach ($counterGroups as $group) {
@@ -228,5 +297,6 @@ function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
         'counters' => $counters,
         'strengths' => $strengths,
         'weaknesses' => $weaknesses,
+        'counter_reference' => admin_fetch_counter_reference_lists($db),
     ];
 }

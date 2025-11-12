@@ -76,6 +76,42 @@ CREATE TABLE IF NOT EXISTS hero_combo_steps (
     CONSTRAINT fk_combo_steps_skill FOREIGN KEY (skill_id) REFERENCES hero_skills(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS item_categories (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(60) NOT NULL,
+    name_en VARCHAR(120) NOT NULL,
+    name_fa VARCHAR(120) NOT NULL,
+    description_en TEXT NULL,
+    description_fa TEXT NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_item_categories_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS items (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_id INT UNSIGNED NOT NULL,
+    slug VARCHAR(120) NOT NULL,
+    name_en VARCHAR(150) NOT NULL,
+    name_fa VARCHAR(150) NOT NULL,
+    tier VARCHAR(50) NULL,
+    gold_cost INT UNSIGNED NULL,
+    stats_en TEXT NULL,
+    stats_fa TEXT NULL,
+    passive_en TEXT NULL,
+    passive_fa TEXT NULL,
+    active_en TEXT NULL,
+    active_fa TEXT NULL,
+    description_en TEXT NULL,
+    description_fa TEXT NULL,
+    image_url VARCHAR(255) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_items_category FOREIGN KEY (category_id) REFERENCES item_categories(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    UNIQUE KEY uq_items_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS hero_tips (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     hero_id INT UNSIGNED NOT NULL,
@@ -105,13 +141,19 @@ CREATE TABLE IF NOT EXISTS hero_counter_groups (
 CREATE TABLE IF NOT EXISTS hero_counter_entities (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     group_id INT UNSIGNED NOT NULL,
-    name_en VARCHAR(150) NOT NULL,
-    name_fa VARCHAR(150) NOT NULL,
+    target_hero_id INT UNSIGNED NULL,
+    target_item_id INT UNSIGNED NULL,
+    name_en VARCHAR(150) NULL,
+    name_fa VARCHAR(150) NULL,
     image_url VARCHAR(255) NULL,
     sort_order INT DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_counter_entities_group FOREIGN KEY (group_id) REFERENCES hero_counter_groups(id) ON DELETE CASCADE
+    CONSTRAINT fk_counter_entities_group FOREIGN KEY (group_id) REFERENCES hero_counter_groups(id) ON DELETE CASCADE,
+    CONSTRAINT fk_counter_entities_target_hero FOREIGN KEY (target_hero_id) REFERENCES heroes(id) ON DELETE SET NULL,
+    CONSTRAINT fk_counter_entities_target_item FOREIGN KEY (target_item_id) REFERENCES items(id) ON DELETE SET NULL,
+    KEY idx_counter_entities_target_hero (target_hero_id),
+    KEY idx_counter_entities_target_item (target_item_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS hero_strengths (
