@@ -2,11 +2,11 @@
 declare(strict_types=1);
 
 ?>
-<section class="panel-card" id="hero-list">
+<section class="panel-card hero-catalog" id="hero-list">
     <div class="section-heading">
         <div>
             <h2 class="section-title">لیست هیروهای ثبت‌شده</h2>
-            <p class="section-description">برای ویرایش روی دکمه «ویرایش» کلیک کنید یا برای حذف کامل، گزینه «حذف» را بزنید.</p>
+            <p class="section-description">به سرعت وضعیت هر هیرو را مشاهده و از همین‌جا ویرایش یا حذف کنید.</p>
         </div>
         <div class="section-actions">
             <a class="primary" href="<?= htmlspecialchars(mlbb_admin_url('hero_create.php'), ENT_QUOTES, 'UTF-8') ?>">+ افزودن هیرو جدید</a>
@@ -16,39 +16,78 @@ declare(strict_types=1);
     <?php if (empty($heroes)): ?>
         <p class="empty-state">هنوز هیرویی ثبت نشده است. از منوی بالا گزینه «افزودن هیرو» را انتخاب کنید.</p>
     <?php else: ?>
-        <div class="hero-list-grid">
+        <div class="hero-card-grid">
             <?php foreach ($heroes as $heroRow): ?>
                 <?php
                     $heroId = (int) $heroRow['id'];
                     $imageSrc = admin_resolve_image_src($heroRow['image_url'] ?? '');
+                    $skills = $heroRow['skills'] ?? [];
                 ?>
-                <article class="hero-tile">
-                    <div class="hero-tile-image">
-                        <?php if ($imageSrc !== ''): ?>
-                            <img src="<?= htmlspecialchars($imageSrc) ?>" alt="<?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en']) ?>">
-                        <?php else: ?>
-                            <div class="hero-tile-placeholder">بدون تصویر</div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="hero-tile-body">
-                        <h3 class="hero-tile-title"><?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en']) ?></h3>
-                        <?php if (!empty($heroRow['name_en'])): ?>
-                            <p class="hero-tile-subtitle">نام انگلیسی: <?= htmlspecialchars($heroRow['name_en']) ?></p>
-                        <?php endif; ?>
-                        <?php if (!empty($heroRow['role_name'])): ?>
-                            <span class="hero-tile-role">رول: <?= htmlspecialchars($heroRow['role_name']) ?></span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="hero-tile-actions">
-                        <a class="secondary-button" href="<?= htmlspecialchars(mlbb_admin_url('hero.php') . '?hero=' . $heroId) ?>">ویرایش</a>
-                        <form method="post" action="<?= htmlspecialchars(mlbb_admin_url('index.php')) ?>" onsubmit="return confirm('آیا از حذف این هیرو و تمامی اطلاعات وابسته مطمئن هستید؟ این عملیات قابل بازگشت نیست.');">
-                            <input type="hidden" name="action" value="delete_hero">
-                            <input type="hidden" name="hero_id" value="<?= $heroId ?>">
-                            <input type="hidden" name="redirect_anchor" value="hero-list">
-                            <input type="hidden" name="return_to" value="index.php">
-                            <button type="submit" class="danger-button">حذف</button>
-                        </form>
-                    </div>
+                <article class="hero-card">
+                    <header class="hero-card-header">
+                        <div class="hero-card-avatar">
+                            <?php if ($imageSrc !== ''): ?>
+                                <img src="<?= htmlspecialchars($imageSrc) ?>" alt="<?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en']) ?>">
+                            <?php else: ?>
+                                <div class="hero-card-avatar-placeholder" aria-hidden="true">?</div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="hero-card-info">
+                            <h3 class="hero-card-title"><?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en']) ?></h3>
+                            <div class="hero-card-meta">
+                                <?php if (!empty($heroRow['role_name'])): ?>
+                                    <span class="badge badge-role"><?= htmlspecialchars($heroRow['role_name']) ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($heroRow['name_en'])): ?>
+                                    <span class="badge badge-ghost"><?= htmlspecialchars($heroRow['name_en']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="hero-card-actions">
+                            <a class="icon-button" href="<?= htmlspecialchars(mlbb_admin_url('hero.php') . '?hero=' . $heroId) ?>" title="ویرایش هیرو">
+                                <span class="icon edit" aria-hidden="true"></span>
+                                <span class="sr-only">ویرایش</span>
+                            </a>
+                            <form method="post" action="<?= htmlspecialchars(mlbb_admin_url('index.php')) ?>" onsubmit="return confirm('آیا از حذف این هیرو و تمامی اطلاعات وابسته مطمئن هستید؟ این عملیات قابل بازگشت نیست.');">
+                                <input type="hidden" name="action" value="delete_hero">
+                                <input type="hidden" name="hero_id" value="<?= $heroId ?>">
+                                <input type="hidden" name="redirect_anchor" value="hero-list">
+                                <input type="hidden" name="return_to" value="index.php">
+                                <button type="submit" class="icon-button danger" title="حذف کامل هیرو">
+                                    <span class="icon trash" aria-hidden="true"></span>
+                                    <span class="sr-only">حذف</span>
+                                </button>
+                            </form>
+                        </div>
+                    </header>
+
+                    <?php if (!empty($skills)): ?>
+                        <div class="hero-card-skills" aria-label="مهارت‌های هیرو">
+                            <?php foreach ($skills as $skill): ?>
+                                <?php
+                                    $skillLabel = admin_skill_type_label((string) ($skill['skill_type'] ?? ''));
+                                    $skillName = trim((string) ($skill['name'] ?? ''));
+                                    $skillImage = admin_resolve_image_src($skill['image_url'] ?? '');
+                                    $skillInitial = $skillLabel !== '' ? (function_exists('mb_substr') ? mb_substr($skillLabel, 0, 1, 'UTF-8') : substr($skillLabel, 0, 1)) : '?';
+                                ?>
+                                <div class="skill-chip">
+                                    <div class="skill-chip-thumb">
+                                        <?php if ($skillImage !== ''): ?>
+                                            <img src="<?= htmlspecialchars($skillImage) ?>" alt="<?= htmlspecialchars($skillLabel) ?>">
+                                        <?php else: ?>
+                                            <span aria-hidden="true"><?= htmlspecialchars($skillInitial ?: '?') ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="skill-chip-body">
+                                        <span class="skill-chip-type"><?= htmlspecialchars($skillLabel) ?></span>
+                                        <?php if ($skillName !== '' && $skillName !== $skillLabel): ?>
+                                            <span class="skill-chip-name"><?= htmlspecialchars($skillName) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>

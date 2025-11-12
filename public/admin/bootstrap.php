@@ -115,3 +115,16 @@ function admin_resolve_image_src(?string $path): string
 
     return mlbb_url($trimmed);
 }
+
+function admin_skill_type_label(string $type): string
+{
+    $map = [
+        'Passive' => 'اسکیل پسیو',
+        'Skill1' => 'اسکیل ۱',
+        'Skill2' => 'اسکیل ۲',
+        'Skill3' => 'اسکیل ۳',
+        'Ultimate' => 'آلتیمیت',
+    ];
+
+    return $map[$type] ?? $type;
+}

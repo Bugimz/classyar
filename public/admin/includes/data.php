@@ -75,8 +75,48 @@ function admin_fetch_heroes(PDO $db): array
             ORDER BY h.name_fa ASC, h.id ASC';
 
     $stmt = $db->query($sql);
+    $heroes = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
-    return $stmt ? $stmt->fetchAll() : [];
+    if (empty($heroes)) {
+        return [];
+    }
+
+    $heroIds = array_map(static fn(array $row): int => (int) $row['id'], $heroes);
+    $placeholders = implode(',', array_fill(0, count($heroIds), '?'));
+
+    $skillSql = "SELECT hero_id, skill_type, name_fa, name_en, image_url
+                 FROM hero_skills
+                 WHERE hero_id IN ({$placeholders})
+                 ORDER BY hero_id ASC, FIELD(skill_type, 'Passive','Skill1','Skill2','Skill3','Ultimate'), id ASC";
+
+    $skillStmt = $db->prepare($skillSql);
+    $skillStmt->execute($heroIds);
+
+    $skillsByHero = [];
+    while ($skillRow = $skillStmt->fetch(PDO::FETCH_ASSOC)) {
+        $heroId = (int) ($skillRow['hero_id'] ?? 0);
+        if ($heroId === 0) {
+            continue;
+        }
+
+        $nameFa = isset($skillRow['name_fa']) ? (string) $skillRow['name_fa'] : '';
+        $nameEn = isset($skillRow['name_en']) ? (string) $skillRow['name_en'] : '';
+        $skillName = $nameFa !== '' ? $nameFa : $nameEn;
+
+        $skillsByHero[$heroId][] = [
+            'skill_type' => (string) ($skillRow['skill_type'] ?? ''),
+            'name' => $skillName,
+            'image_url' => (string) ($skillRow['image_url'] ?? ''),
+        ];
+    }
+
+    foreach ($heroes as &$heroRow) {
+        $heroId = (int) $heroRow['id'];
+        $heroRow['skills'] = $skillsByHero[$heroId] ?? [];
+    }
+    unset($heroRow);
+
+    return $heroes;
 }
 
 function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
