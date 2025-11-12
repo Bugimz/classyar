@@ -15,6 +15,7 @@ $counters = $activeHeroBundle['counters'];
                 <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
                 <input type="hidden" name="counter_id" value="<?= (int) $counter['id'] ?>">
                 <input type="hidden" name="redirect_anchor" value="counters">
+                <input type="hidden" name="return_to" value="hero.php">
                 <div class="form-group">
                     <label>نام فارسی کانتر</label>
                     <input type="text" name="counter_hero_fa" class="form-control" value="<?= htmlspecialchars($counter['counter_hero_fa'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -51,6 +52,7 @@ $counters = $activeHeroBundle['counters'];
         <input type="hidden" name="action" value="add_counter">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="counters">
+        <input type="hidden" name="return_to" value="hero.php">
         <h4 class="card-title">افزودن کانتر جدید</h4>
         <div class="form-group grid grid-2">
             <div>

@@ -8,10 +8,13 @@ declare(strict_types=1);
             <h2 class="section-title">لیست هیروهای ثبت‌شده</h2>
             <p class="section-description">برای ویرایش روی دکمه «ویرایش» کلیک کنید یا برای حذف کامل، گزینه «حذف» را بزنید.</p>
         </div>
+        <div class="section-actions">
+            <a class="primary" href="<?= htmlspecialchars(mlbb_admin_url('hero_create.php'), ENT_QUOTES, 'UTF-8') ?>">+ افزودن هیرو جدید</a>
+        </div>
     </div>
 
     <?php if (empty($heroes)): ?>
-        <p class="empty-state">هنوز هیرویی ثبت نشده است. از فرم «افزودن هیرو جدید» استفاده کنید.</p>
+        <p class="empty-state">هنوز هیرویی ثبت نشده است. از منوی بالا گزینه «افزودن هیرو» را انتخاب کنید.</p>
     <?php else: ?>
         <div class="hero-list-grid">
             <?php foreach ($heroes as $heroRow): ?>
@@ -37,11 +40,12 @@ declare(strict_types=1);
                         <?php endif; ?>
                     </div>
                     <div class="hero-tile-actions">
-                        <a class="secondary-button" href="<?= htmlspecialchars(mlbb_admin_url('index.php') . '?hero=' . $heroId) ?>#manage">ویرایش</a>
+                        <a class="secondary-button" href="<?= htmlspecialchars(mlbb_admin_url('hero.php') . '?hero=' . $heroId) ?>">ویرایش</a>
                         <form method="post" action="<?= htmlspecialchars(mlbb_admin_url('index.php')) ?>" onsubmit="return confirm('آیا از حذف این هیرو و تمامی اطلاعات وابسته مطمئن هستید؟ این عملیات قابل بازگشت نیست.');">
                             <input type="hidden" name="action" value="delete_hero">
                             <input type="hidden" name="hero_id" value="<?= $heroId ?>">
                             <input type="hidden" name="redirect_anchor" value="hero-list">
+                            <input type="hidden" name="return_to" value="index.php">
                             <button type="submit" class="danger-button">حذف</button>
                         </form>
                     </div>

@@ -15,6 +15,7 @@ $skills = $activeHeroBundle['skills'];
                 <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
                 <input type="hidden" name="skill_id" value="<?= (int) $skill['id'] ?>">
                 <input type="hidden" name="redirect_anchor" value="skills">
+                <input type="hidden" name="return_to" value="hero.php">
                 <div class="form-group">
                     <label>نوع مهارت</label>
                     <input type="text" name="skill_type" class="form-control" value="<?= htmlspecialchars($skill['skill_type'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -65,6 +66,7 @@ $skills = $activeHeroBundle['skills'];
         <input type="hidden" name="action" value="add_skill">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="skills">
+        <input type="hidden" name="return_to" value="hero.php">
         <h4 class="card-title">افزودن مهارت جدید</h4>
         <div class="form-group grid grid-2">
             <div>

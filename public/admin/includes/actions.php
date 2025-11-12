@@ -7,6 +7,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 $anchor = admin_filter_anchor($_POST['redirect_anchor'] ?? '');
+$allowedReturnTargets = ['index.php', 'hero.php', 'hero_create.php'];
+$returnTo = $_POST['return_to'] ?? 'index.php';
+if (!in_array($returnTo, $allowedReturnTargets, true)) {
+    $returnTo = 'index.php';
+}
 
 try {
     switch ($action) {
@@ -40,7 +45,7 @@ try {
 
             $heroId = (int) $db->lastInsertId();
             admin_flash('success', 'هیرو جدید با موفقیت ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'manage');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'manage');
             break;
 
         case 'update_hero':
@@ -92,7 +97,7 @@ try {
             ]);
 
             admin_flash('success', 'تغییرات هیرو ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'manage');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'manage');
             break;
 
         case 'delete_hero':
@@ -129,7 +134,7 @@ try {
             $db->commit();
 
             admin_flash('success', 'هیرو و تمام اطلاعات وابسته با موفقیت حذف شد.');
-            admin_redirect('index.php', [], $anchor ?: 'hero-list');
+            admin_redirect($returnTo, [], $anchor ?: 'hero-list');
             break;
 
         case 'add_skill':
@@ -154,7 +159,7 @@ try {
             ]);
 
             admin_flash('success', 'مهارت جدید ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'skills');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'skills');
             break;
 
         case 'update_skill':
@@ -190,7 +195,7 @@ try {
             ]);
 
             admin_flash('success', 'تغییرات مهارت اعمال شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'skills');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'skills');
             break;
 
         case 'add_combo':
@@ -208,7 +213,7 @@ try {
             ]);
 
             admin_flash('success', 'کامبو جدید اضافه شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'combos');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'combos');
             break;
 
         case 'update_combo':
@@ -235,7 +240,7 @@ try {
             ]);
 
             admin_flash('success', 'کامبو به‌روزرسانی شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'combos');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'combos');
             break;
 
         case 'add_tip':
@@ -251,7 +256,7 @@ try {
             ]);
 
             admin_flash('success', 'نکته ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'tips');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'tips');
             break;
 
         case 'update_tip':
@@ -274,7 +279,7 @@ try {
             ]);
 
             admin_flash('success', 'نکته به‌روزرسانی شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'tips');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'tips');
             break;
 
         case 'add_counter':
@@ -296,7 +301,7 @@ try {
             ]);
 
             admin_flash('success', 'کانتر ثبت شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'counters');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
             break;
 
         case 'update_counter':
@@ -326,7 +331,7 @@ try {
             ]);
 
             admin_flash('success', 'کانتر به‌روزرسانی شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'counters');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
             break;
 
         case 'add_strength':
@@ -338,7 +343,7 @@ try {
             ]);
 
             admin_flash('success', 'نقطه قوت ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'strengths');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'strengths');
             break;
 
         case 'update_strength':
@@ -352,7 +357,7 @@ try {
             ]);
 
             admin_flash('success', 'نقطه قوت به‌روزرسانی شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'strengths');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'strengths');
             break;
 
         case 'add_weakness':
@@ -364,7 +369,7 @@ try {
             ]);
 
             admin_flash('success', 'نقطه ضعف ذخیره شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'weaknesses');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'weaknesses');
             break;
 
         case 'update_weakness':
@@ -378,12 +383,12 @@ try {
             ]);
 
             admin_flash('success', 'نقطه ضعف به‌روزرسانی شد.');
-            admin_redirect('index.php', ['hero' => $heroId], $anchor ?: 'weaknesses');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'weaknesses');
             break;
 
         default:
             admin_flash('error', 'اقدام نامعتبر است.');
-            admin_redirect('index.php', []);
+            admin_redirect($returnTo, []);
     }
 } catch (Throwable $throwable) {
     if ($db->inTransaction()) {
@@ -398,5 +403,5 @@ try {
     }
 
     admin_flash('error', 'خطا در ذخیره‌سازی داده. لطفاً دوباره تلاش کنید.');
-    admin_redirect('index.php', $query, $anchor ?: null);
+    admin_redirect($returnTo, $query, $anchor ?: null);
 }

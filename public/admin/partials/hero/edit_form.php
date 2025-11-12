@@ -6,6 +6,7 @@ declare(strict_types=1);
         <input type="hidden" name="action" value="update_hero">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="manage">
+        <input type="hidden" name="return_to" value="hero.php">
         <div>
             <div class="form-group">
                 <label>نام فارسی</label>

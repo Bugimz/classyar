@@ -15,6 +15,7 @@ $weaknesses = $activeHeroBundle['weaknesses'];
                 <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
                 <input type="hidden" name="weakness_id" value="<?= (int) $weakness['id'] ?>">
                 <input type="hidden" name="redirect_anchor" value="weaknesses">
+                <input type="hidden" name="return_to" value="hero.php">
                 <div class="form-group">
                     <label>متن نقطه ضعف</label>
                     <textarea name="weakness_text" rows="2" class="form-control"><?= htmlspecialchars($weakness['weakness_text'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
@@ -30,6 +31,7 @@ $weaknesses = $activeHeroBundle['weaknesses'];
         <input type="hidden" name="action" value="add_weakness">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="weaknesses">
+        <input type="hidden" name="return_to" value="hero.php">
         <h4 class="card-title">افزودن نقطه ضعف</h4>
         <div class="form-group">
             <textarea name="weakness_text" rows="2" class="form-control" placeholder="به عنوان مثال: آسیب‌پذیر در برابر ضدریجن"></textarea>

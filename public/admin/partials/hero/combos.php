@@ -15,6 +15,7 @@ $combos = $activeHeroBundle['combos'];
                 <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
                 <input type="hidden" name="combo_id" value="<?= (int) $combo['id'] ?>">
                 <input type="hidden" name="redirect_anchor" value="combos">
+                <input type="hidden" name="return_to" value="hero.php">
                 <div class="form-group">
                     <label>نام فارسی</label>
                     <input type="text" name="combo_name_fa" class="form-control" value="<?= htmlspecialchars($combo['combo_name_fa'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -56,6 +57,7 @@ $combos = $activeHeroBundle['combos'];
         <input type="hidden" name="action" value="add_combo">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="combos">
+        <input type="hidden" name="return_to" value="hero.php">
         <h4 class="card-title">افزودن کامبو جدید</h4>
         <div class="form-group grid grid-2">
             <div>

@@ -15,6 +15,7 @@ $strengths = $activeHeroBundle['strengths'];
                 <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
                 <input type="hidden" name="strength_id" value="<?= (int) $strength['id'] ?>">
                 <input type="hidden" name="redirect_anchor" value="strengths">
+                <input type="hidden" name="return_to" value="hero.php">
                 <div class="form-group">
                     <label>متن نقطه قوت</label>
                     <textarea name="strength_text" rows="2" class="form-control"><?= htmlspecialchars($strength['strength_text'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
@@ -30,6 +31,7 @@ $strengths = $activeHeroBundle['strengths'];
         <input type="hidden" name="action" value="add_strength">
         <input type="hidden" name="hero_id" value="<?= (int) $hero['id'] ?>">
         <input type="hidden" name="redirect_anchor" value="strengths">
+        <input type="hidden" name="return_to" value="hero.php">
         <h4 class="card-title">افزودن نقطه قوت</h4>
         <div class="form-group">
             <textarea name="strength_text" rows="2" class="form-control" placeholder="به عنوان مثال: محافظت عالی از هم‌تیمی‌ها"></textarea>

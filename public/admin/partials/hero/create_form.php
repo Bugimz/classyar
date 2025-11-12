@@ -10,6 +10,8 @@ declare(strict_types=1);
     </div>
     <form method="post" enctype="multipart/form-data" class="form-grid form-grid-2">
         <input type="hidden" name="action" value="add_hero">
+        <input type="hidden" name="redirect_anchor" value="manage">
+        <input type="hidden" name="return_to" value="hero.php">
         <div>
             <div class="form-group">
                 <label>نام فارسی</label>
