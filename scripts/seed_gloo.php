@@ -92,6 +92,13 @@ try {
         $skillStmt->execute($skill);
     }
 
+    $skillLookupStmt = $db->prepare('SELECT id, skill_type FROM hero_skills WHERE hero_id = :hero_id');
+    $skillLookupStmt->execute([':hero_id' => $heroId]);
+    $skillIdsByType = [];
+    while ($skillRow = $skillLookupStmt->fetch(PDO::FETCH_ASSOC)) {
+        $skillIdsByType[$skillRow['skill_type']] = (int) $skillRow['id'];
+    }
+
     $combos = [
         [
             'combo_name' => 'Protect Carry',
@@ -124,6 +131,41 @@ try {
         $combo['hero_id'] = $heroId;
         $combo['combo_description_fa'] = $combo['combo_description'];
         $comboStmt->execute($combo);
+    }
+
+    $comboLookupStmt = $db->prepare('SELECT id, combo_name FROM hero_combos WHERE hero_id = :hero_id');
+    $comboLookupStmt->execute([':hero_id' => $heroId]);
+    $comboIdsByName = [];
+    while ($comboRow = $comboLookupStmt->fetch(PDO::FETCH_ASSOC)) {
+        $comboIdsByName[$comboRow['combo_name']] = (int) $comboRow['id'];
+    }
+
+    $comboStepsConfig = [
+        'Protect Carry' => ['Passive', 'Skill2', 'Skill1'],
+        'Aggressive Engage' => ['Ultimate', 'Skill1', 'Passive', 'Skill2', 'Ultimate'],
+        'Zone Control' => ['Skill2', 'Skill1', 'Ultimate', 'Skill2'],
+    ];
+
+    $comboStepStmt = $db->prepare('INSERT INTO hero_combo_steps (combo_id, skill_id, sort_order) VALUES (:combo_id, :skill_id, :sort_order)');
+    foreach ($comboStepsConfig as $comboName => $stepTypes) {
+        if (!isset($comboIdsByName[$comboName])) {
+            continue;
+        }
+
+        $comboId = $comboIdsByName[$comboName];
+        $sortOrder = 1;
+
+        foreach ($stepTypes as $type) {
+            if (!isset($skillIdsByType[$type])) {
+                continue;
+            }
+
+            $comboStepStmt->execute([
+                ':combo_id' => $comboId,
+                ':skill_id' => $skillIdsByType[$type],
+                ':sort_order' => $sortOrder++,
+            ]);
+        }
     }
 
     $tips = [

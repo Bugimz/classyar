@@ -244,6 +244,76 @@ try {
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'combos');
             break;
 
+        case 'add_combo_step':
+            $comboId = (int) ($_POST['combo_id'] ?? 0);
+            $skillId = (int) ($_POST['skill_id'] ?? 0);
+
+            $comboStmt = $db->prepare('SELECT hero_id FROM hero_combos WHERE id = :id');
+            $comboStmt->execute([':id' => $comboId]);
+            $comboRow = $comboStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$comboRow) {
+                admin_flash('error', 'کامبو مورد نظر یافت نشد.');
+                admin_redirect($returnTo, [], $anchor ?: 'combos');
+            }
+
+            $heroId = (int) $comboRow['hero_id'];
+
+            $skillStmt = $db->prepare('SELECT id FROM hero_skills WHERE id = :skill_id AND hero_id = :hero_id');
+            $skillStmt->execute([
+                ':skill_id' => $skillId,
+                ':hero_id' => $heroId,
+            ]);
+
+            if (!$skillStmt->fetchColumn()) {
+                admin_flash('error', 'مهارت انتخاب شده معتبر نیست.');
+                admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'combos');
+            }
+
+            $sortOrder = null;
+            if (isset($_POST['sort_order']) && $_POST['sort_order'] !== '') {
+                $sortOrder = (int) $_POST['sort_order'];
+            }
+
+            if ($sortOrder === null) {
+                $orderStmt = $db->prepare('SELECT COALESCE(MAX(sort_order), 0) FROM hero_combo_steps WHERE combo_id = :combo_id');
+                $orderStmt->execute([':combo_id' => $comboId]);
+                $sortOrder = ((int) $orderStmt->fetchColumn()) + 1;
+            }
+
+            $insertStmt = $db->prepare('INSERT INTO hero_combo_steps (combo_id, skill_id, sort_order) VALUES (:combo_id, :skill_id, :sort_order)');
+            $insertStmt->execute([
+                ':combo_id' => $comboId,
+                ':skill_id' => $skillId,
+                ':sort_order' => $sortOrder,
+            ]);
+
+            admin_flash('success', 'مرحله جدید به کامبو اضافه شد.');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'combos');
+            break;
+
+        case 'delete_combo_step':
+            $stepId = (int) ($_POST['step_id'] ?? 0);
+
+            $stepStmt = $db->prepare('SELECT cs.combo_id, c.hero_id FROM hero_combo_steps cs JOIN hero_combos c ON c.id = cs.combo_id WHERE cs.id = :id');
+            $stepStmt->execute([':id' => $stepId]);
+            $stepRow = $stepStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$stepRow) {
+                admin_flash('error', 'مرحله مورد نظر یافت نشد.');
+                admin_redirect($returnTo, [], $anchor ?: 'combos');
+            }
+
+            $heroId = (int) $stepRow['hero_id'];
+            $comboId = (int) $stepRow['combo_id'];
+
+            $deleteStmt = $db->prepare('DELETE FROM hero_combo_steps WHERE id = :id');
+            $deleteStmt->execute([':id' => $stepId]);
+
+            admin_flash('success', 'مرحله حذف شد.');
+            admin_redirect($returnTo, ['hero' => $heroId, 'combo' => $comboId], $anchor ?: 'combos');
+            break;
+
         case 'add_tip':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
             $stmt = $db->prepare('INSERT INTO hero_tips (hero_id, tip_type, tip_text, tip_text_en, priority)

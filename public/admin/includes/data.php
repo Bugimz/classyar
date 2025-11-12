@@ -8,6 +8,7 @@ function admin_check_schema(PDO $db): array
         'heroes',
         'hero_skills',
         'hero_combos',
+        'hero_combo_steps',
         'hero_tips',
         'hero_counter_groups',
         'hero_counter_entities',
@@ -43,6 +44,7 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'heroes' => 0,
         'skills' => 0,
         'combos' => 0,
+        'combo_steps' => 0,
         'tips' => 0,
         'counter_groups' => 0,
         'counter_entities' => 0,
@@ -55,6 +57,7 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'heroes' => 'SELECT COUNT(*) FROM heroes',
         'skills' => 'SELECT COUNT(*) FROM hero_skills',
         'combos' => 'SELECT COUNT(*) FROM hero_combos',
+        'combo_steps' => 'SELECT COUNT(*) FROM hero_combo_steps',
         'tips' => 'SELECT COUNT(*) FROM hero_tips',
         'counter_groups' => 'SELECT COUNT(*) FROM hero_counter_groups',
         'counter_entities' => 'SELECT COUNT(*) FROM hero_counter_entities',
@@ -141,7 +144,46 @@ function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
 
     $comboStmt = $db->prepare('SELECT * FROM hero_combos WHERE hero_id = :id ORDER BY id ASC');
     $comboStmt->execute([':id' => $heroId]);
-    $combos = $comboStmt->fetchAll();
+    $combos = $comboStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($combos)) {
+        $comboIds = array_map(static fn(array $row): int => (int) $row['id'], $combos);
+        $placeholder = implode(',', array_fill(0, count($comboIds), '?'));
+
+        $stepSql = "SELECT cs.*, s.skill_type, s.name_en AS skill_name_en, s.name_fa AS skill_name_fa, s.image_url AS skill_image_url
+            FROM hero_combo_steps cs
+            LEFT JOIN hero_skills s ON s.id = cs.skill_id
+            WHERE cs.combo_id IN ({$placeholder})
+            ORDER BY cs.sort_order ASC, cs.id ASC";
+
+        $stepStmt = $db->prepare($stepSql);
+        $stepStmt->execute($comboIds);
+
+        $stepsByCombo = [];
+        while ($stepRow = $stepStmt->fetch(PDO::FETCH_ASSOC)) {
+            $comboId = (int) ($stepRow['combo_id'] ?? 0);
+            if ($comboId === 0) {
+                continue;
+            }
+
+            $stepsByCombo[$comboId][] = [
+                'id' => (int) ($stepRow['id'] ?? 0),
+                'combo_id' => $comboId,
+                'skill_id' => (int) ($stepRow['skill_id'] ?? 0),
+                'custom_label' => $stepRow['custom_label'] ?? null,
+                'sort_order' => (int) ($stepRow['sort_order'] ?? 0),
+                'skill_type' => $stepRow['skill_type'] ?? null,
+                'skill_name_en' => $stepRow['skill_name_en'] ?? null,
+                'skill_name_fa' => $stepRow['skill_name_fa'] ?? null,
+                'skill_image_url' => $stepRow['skill_image_url'] ?? null,
+            ];
+        }
+
+        foreach ($combos as &$comboRow) {
+            $comboRow['steps'] = $stepsByCombo[(int) $comboRow['id']] ?? [];
+        }
+        unset($comboRow);
+    }
 
     $tipStmt = $db->prepare('SELECT * FROM hero_tips WHERE hero_id = :id ORDER BY priority DESC, id DESC');
     $tipStmt->execute([':id' => $heroId]);

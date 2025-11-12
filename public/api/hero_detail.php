@@ -28,8 +28,38 @@ try {
     $skillsStmt = $db->prepare('SELECT skill_type, name_en, name_fa, description, cooldown, mana_cost, damage_type, tips, image_url FROM hero_skills WHERE hero_id = :hero_id ORDER BY FIELD(skill_type, "Passive", "Skill1", "Skill2", "Skill3", "Ultimate")');
     $skillsStmt->execute([':hero_id' => $id]);
 
-    $combosStmt = $db->prepare('SELECT combo_name, combo_name_fa, combo_steps, combo_description, combo_description_fa, difficulty FROM hero_combos WHERE hero_id = :hero_id ORDER BY id');
+    $combosStmt = $db->prepare('SELECT id, combo_name, combo_name_fa, combo_steps, combo_description, combo_description_fa, difficulty FROM hero_combos WHERE hero_id = :hero_id ORDER BY id');
     $combosStmt->execute([':hero_id' => $id]);
+    $combos = $combosStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($combos)) {
+        $comboIds = array_map(static fn(array $row): int => (int) $row['id'], $combos);
+        $placeholder = implode(',', array_fill(0, count($comboIds), '?'));
+
+        $stepSql = "SELECT cs.*, s.skill_type, s.name_en AS skill_name_en, s.name_fa AS skill_name_fa, s.image_url AS skill_image_url
+            FROM hero_combo_steps cs
+            LEFT JOIN hero_skills s ON s.id = cs.skill_id
+            WHERE cs.combo_id IN ({$placeholder})
+            ORDER BY cs.sort_order ASC, cs.id ASC";
+
+        $stepStmt = $db->prepare($stepSql);
+        $stepStmt->execute($comboIds);
+
+        $stepsByCombo = [];
+        while ($stepRow = $stepStmt->fetch(PDO::FETCH_ASSOC)) {
+            $comboId = (int) ($stepRow['combo_id'] ?? 0);
+            if ($comboId === 0) {
+                continue;
+            }
+
+            $stepsByCombo[$comboId][] = $stepRow;
+        }
+
+        foreach ($combos as &$comboRow) {
+            $comboRow['steps'] = $stepsByCombo[(int) $comboRow['id']] ?? [];
+        }
+        unset($comboRow);
+    }
 
     $tipsStmt = $db->prepare('SELECT tip_type, tip_text, tip_text_en, priority FROM hero_tips WHERE hero_id = :hero_id ORDER BY priority DESC, id ASC');
     $tipsStmt->execute([':hero_id' => $id]);
@@ -68,7 +98,7 @@ try {
         'data' => [
             'hero' => $hero,
             'skills' => $skillsStmt->fetchAll(),
-            'combos' => $combosStmt->fetchAll(),
+            'combos' => $combos,
             'tips' => $tipsStmt->fetchAll(),
             'counter_groups' => $counterGroups,
             'counters' => $counterGroups,

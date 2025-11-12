@@ -32,7 +32,36 @@ $skills = $skillStmt->fetchAll();
 
 $comboStmt = $db->prepare('SELECT * FROM hero_combos WHERE hero_id = :hero_id ORDER BY id');
 $comboStmt->execute([':hero_id' => $heroId]);
-$combos = $comboStmt->fetchAll();
+$combos = $comboStmt->fetchAll(PDO::FETCH_ASSOC);
+
+if (!empty($combos)) {
+    $comboIds = array_map(static fn(array $row): int => (int) $row['id'], $combos);
+    $placeholder = implode(',', array_fill(0, count($comboIds), '?'));
+
+    $stepSql = "SELECT cs.*, s.skill_type, s.name_en AS skill_name_en, s.name_fa AS skill_name_fa, s.image_url AS skill_image_url
+        FROM hero_combo_steps cs
+        LEFT JOIN hero_skills s ON s.id = cs.skill_id
+        WHERE cs.combo_id IN ({$placeholder})
+        ORDER BY cs.sort_order ASC, cs.id ASC";
+
+    $stepStmt = $db->prepare($stepSql);
+    $stepStmt->execute($comboIds);
+
+    $stepsByCombo = [];
+    while ($stepRow = $stepStmt->fetch(PDO::FETCH_ASSOC)) {
+        $comboId = (int) ($stepRow['combo_id'] ?? 0);
+        if ($comboId === 0) {
+            continue;
+        }
+
+        $stepsByCombo[$comboId][] = $stepRow;
+    }
+
+    foreach ($combos as &$comboRow) {
+        $comboRow['steps'] = $stepsByCombo[(int) $comboRow['id']] ?? [];
+    }
+    unset($comboRow);
+}
 
 $tipStmt = $db->prepare('SELECT * FROM hero_tips WHERE hero_id = :hero_id ORDER BY priority DESC, id ASC');
 $tipStmt->execute([':hero_id' => $heroId]);
@@ -174,10 +203,39 @@ $allHeroes = $allHeroesStmt->fetchAll();
                     <div class="card">
                         <h3><?= htmlspecialchars($combo['combo_name_fa']) ?></h3>
                         <div class="badge">درجه سختی: <?= htmlspecialchars($combo['difficulty']) ?></div>
-                        <p style="margin-top:1rem;">
-                            <strong>مراحل:</strong><br>
-                            <?= nl2br(htmlspecialchars($combo['combo_steps'])) ?>
-                        </p>
+                        <?php $steps = $combo['steps'] ?? []; ?>
+                        <?php if (!empty($steps)): ?>
+                            <div class="combo-strip" role="list" aria-label="ترتیب مهارت‌های کامبو">
+                                <?php foreach ($steps as $step): ?>
+                                    <?php
+                                    $stepNameFa = $step['skill_name_fa'] ?? '';
+                                    $stepNameEn = $step['skill_name_en'] ?? '';
+                                    $stepLabel = $stepNameFa !== '' ? $stepNameFa : ($stepNameEn !== '' ? $stepNameEn : 'مهارت');
+                                    $typeLabel = $step['skill_type'] ?? '';
+                                    $typeLabel = $typeLabel !== '' ? $typeLabel : '';
+                                    $imageSrc = $step['skill_image_url'] ?? '';
+                                    if ($imageSrc !== '' && !preg_match('#^https?://#i', $imageSrc)) {
+                                        $imageSrc = mlbb_url(ltrim($imageSrc, '/'));
+                                    }
+                                    $initialSource = $stepLabel !== '' ? $stepLabel : ($typeLabel !== '' ? $typeLabel : '?');
+                                    $initialChar = function_exists('mb_substr') ? mb_substr($initialSource, 0, 1, 'UTF-8') : substr($initialSource, 0, 1);
+                                    ?>
+                                    <div class="combo-strip__item" role="listitem">
+                                        <div class="combo-strip__thumb">
+                                            <?php if ($imageSrc !== ''): ?>
+                                                <img src="<?= htmlspecialchars($imageSrc, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($stepLabel, ENT_QUOTES, 'UTF-8') ?>">
+                                            <?php else: ?>
+                                                <span><?= htmlspecialchars($initialChar ?: '?', ENT_QUOTES, 'UTF-8') ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <span class="combo-strip__label"><?= htmlspecialchars($stepLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($combo['combo_steps'])): ?>
+                            <p class="combo-steps-text"><strong>توضیح مرحله‌ای:</strong> <?= nl2br(htmlspecialchars($combo['combo_steps'])) ?></p>
+                        <?php endif; ?>
                         <p><?= nl2br(htmlspecialchars($combo['combo_description_fa'])) ?></p>
                     </div>
                 <?php endforeach; ?>
