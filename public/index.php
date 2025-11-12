@@ -38,9 +38,28 @@ $tipStmt = $db->prepare('SELECT * FROM hero_tips WHERE hero_id = :hero_id ORDER 
 $tipStmt->execute([':hero_id' => $heroId]);
 $heroTips = $tipStmt->fetchAll();
 
-$counterStmt = $db->prepare('SELECT counter_hero, counter_hero_fa, image_url FROM hero_counters WHERE hero_id = :hero_id ORDER BY id');
-$counterStmt->execute([':hero_id' => $heroId]);
-$counters = $counterStmt->fetchAll();
+$counterGroupStmt = $db->prepare('SELECT * FROM hero_counter_groups WHERE hero_id = :hero_id ORDER BY sort_order ASC, id ASC');
+$counterGroupStmt->execute([':hero_id' => $heroId]);
+$counterGroupsRaw = $counterGroupStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$counters = [];
+if ($counterGroupsRaw) {
+    $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroupsRaw);
+    $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
+    $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+    $entityStmt->execute($groupIds);
+
+    $entitiesByGroup = [];
+    while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
+        $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+    }
+
+    foreach ($counterGroupsRaw as $group) {
+        $groupId = (int) $group['id'];
+        $group['entities'] = $entitiesByGroup[$groupId] ?? [];
+        $counters[] = $group;
+    }
+}
 
 $strengthStmt = $db->prepare('SELECT strength_text FROM hero_strengths WHERE hero_id = :hero_id ORDER BY id');
 $strengthStmt->execute([':hero_id' => $heroId]);
@@ -166,22 +185,52 @@ $allHeroes = $allHeroesStmt->fetchAll();
         </div>
 
         <div class="hero-card">
-            <div class="section-title">کانترها</div>
-            <div class="counters">
-                <?php if ($counters): ?>
-                    <?php foreach ($counters as $counter): ?>
-                        <div class="counter-card" title="<?= htmlspecialchars($counter['counter_hero_fa']) ?>">
-                            <?php if (!empty($counter['image_url'])): ?>
-                                <img src="<?= htmlspecialchars($counter['image_url']) ?>" alt="<?= htmlspecialchars($counter['counter_hero_fa']) ?>">
-                            <?php else: ?>
-                                <span><?= htmlspecialchars($counter['counter_hero_fa']) ?></span>
-                            <?php endif; ?>
-                        </div>
+            <div class="section-title">کانترها و آیتم‌های پیشنهادی</div>
+            <?php if ($counters): ?>
+                <div class="counter-groups-grid">
+                    <?php foreach ($counters as $group): ?>
+                        <section class="counter-group">
+                            <header class="counter-group__header">
+                                <h3><?= htmlspecialchars($group['title_fa'] ?? $group['title_en']) ?></h3>
+                                <?php if (!empty($group['description_fa'])): ?>
+                                    <p><?= nl2br(htmlspecialchars($group['description_fa'])) ?></p>
+                                <?php elseif (!empty($group['description_en'])): ?>
+                                    <p><?= nl2br(htmlspecialchars($group['description_en'])) ?></p>
+                                <?php endif; ?>
+                            </header>
+                            <div class="counter-entries counter-entries--<?= htmlspecialchars($group['group_type']) ?>">
+                                <?php if (!empty($group['entities'])): ?>
+                                    <?php foreach ($group['entities'] as $entity): ?>
+                                        <?php
+                                            $primaryName = $entity['name_fa'] ?? '';
+                                            if ($primaryName === '') {
+                                                $primaryName = $entity['name_en'] ?? '';
+                                            }
+                                            $secondaryName = $entity['name_en'] ?? '';
+                                            $showSecondary = $secondaryName !== '' && $secondaryName !== $primaryName;
+                                        ?>
+                                        <figure class="counter-entry">
+                                            <?php if (!empty($entity['image_url'])): ?>
+                                                <img src="<?= htmlspecialchars($entity['image_url']) ?>" alt="<?= htmlspecialchars($primaryName !== '' ? $primaryName : $secondaryName) ?>">
+                                            <?php endif; ?>
+                                            <figcaption>
+                                                <span><?= htmlspecialchars($primaryName) ?></span>
+                                                <?php if ($showSecondary): ?>
+                                                    <small><?= htmlspecialchars($secondaryName) ?></small>
+                                                <?php endif; ?>
+                                            </figcaption>
+                                        </figure>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="counter-empty">موردی ثبت نشده است.</p>
+                                <?php endif; ?>
+                            </div>
+                        </section>
                     <?php endforeach; ?>
-                <?php else: ?>
-                    <p>کانتری ثبت نشده است.</p>
-                <?php endif; ?>
-            </div>
+                </div>
+            <?php else: ?>
+                <p>برای این هیرو هنوز کانتری ثبت نشده است.</p>
+            <?php endif; ?>
         </div>
 
         <div class="hero-card">

@@ -136,28 +136,92 @@ a:hover {
     font-size: 0.8rem;
 }
 
-.counters {
+.counter-groups-grid {
+    display: grid;
+    gap: 1.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.counter-group {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    padding: 1.5rem;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.counter-group__header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.counter-group__header p {
+    margin: 0.6rem 0 0;
+    color: rgba(226, 232, 240, 0.85);
+    line-height: 1.7;
+}
+
+.counter-entries {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
 }
 
-.counter-card {
-    width: 110px;
-    aspect-ratio: 1;
-    background: rgba(30, 41, 59, 0.7);
-    border-radius: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+.counter-entry {
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 18px;
+    background: rgba(30, 41, 59, 0.65);
+    border: 1px solid rgba(129, 140, 248, 0.22);
+    min-width: 220px;
+    max-width: 260px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.counter-card img {
-    width: 100%;
-    height: 100%;
+.counter-entry:hover {
+    transform: translateY(-3px);
+    border-color: rgba(129, 140, 248, 0.5);
+}
+
+.counter-entry img {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
     object-fit: cover;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.4);
+}
+
+.counter-entry figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    line-height: 1.2;
+}
+
+.counter-entry figcaption span {
+    font-weight: 600;
+}
+
+.counter-entry figcaption small {
+    color: rgba(148, 163, 184, 0.9);
+}
+
+.counter-entries--item .counter-entry {
+    min-width: 200px;
+}
+
+.counter-entries--item .counter-entry img {
+    border-radius: 16px;
+}
+
+.counter-empty {
+    margin: 0;
+    color: rgba(148, 163, 184, 0.85);
 }
 
 .admin-header {

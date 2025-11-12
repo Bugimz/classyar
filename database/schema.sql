@@ -76,18 +76,30 @@ CREATE TABLE IF NOT EXISTS hero_tips (
     CONSTRAINT fk_tips_hero FOREIGN KEY (hero_id) REFERENCES heroes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS hero_counters (
+CREATE TABLE IF NOT EXISTS hero_counter_groups (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     hero_id INT UNSIGNED NOT NULL,
-    counter_hero VARCHAR(150) NOT NULL,
-    counter_hero_fa VARCHAR(150) NOT NULL,
-    counter_type ENUM('Hard Counter','Soft Counter','Situational') DEFAULT 'Situational',
-    reason TEXT NULL,
-    reason_en TEXT NULL,
-    image_url VARCHAR(255) NULL,
+    group_type ENUM('hero','item') NOT NULL DEFAULT 'hero',
+    title_en VARCHAR(150) NOT NULL,
+    title_fa VARCHAR(150) NOT NULL,
+    description_en TEXT NULL,
+    description_fa TEXT NULL,
+    sort_order INT DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_counters_hero FOREIGN KEY (hero_id) REFERENCES heroes(id) ON DELETE CASCADE
+    CONSTRAINT fk_counter_groups_hero FOREIGN KEY (hero_id) REFERENCES heroes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS hero_counter_entities (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    group_id INT UNSIGNED NOT NULL,
+    name_en VARCHAR(150) NOT NULL,
+    name_fa VARCHAR(150) NOT NULL,
+    image_url VARCHAR(255) NULL,
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_counter_entities_group FOREIGN KEY (group_id) REFERENCES hero_counter_groups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS hero_strengths (

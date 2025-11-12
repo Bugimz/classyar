@@ -147,24 +147,102 @@ try {
         $tipStmt->execute($tip);
     }
 
-    $counters = [
-        ['counter_hero' => 'Diggie', 'counter_hero_fa' => 'دیگی', 'counter_type' => 'Hard Counter', 'reason' => 'Time Journey به متحدان CC Immunity می‌دهد و Reunite Pull را بی‌اثر می‌کند'],
-        ['counter_hero' => 'Baxia', 'counter_hero_fa' => 'باکسیا', 'counter_type' => 'Hard Counter', 'reason' => 'پسیو Anti-regen او ریجن گلو را کاهش می‌دهد'],
-        ['counter_hero' => 'Karrie', 'counter_hero_fa' => 'کری', 'counter_type' => 'Hard Counter', 'reason' => 'True Damage بر اساس Max HP به راحتی از دفاع گلو عبور می‌کند'],
-        ['counter_hero' => 'Nana', 'counter_hero_fa' => 'نانا', 'counter_type' => 'Soft Counter', 'reason' => 'Molina می‌تواند گلو را Morph کند و Combo او را خراب کند'],
-        ['counter_hero' => 'Valir', 'counter_hero_fa' => 'والیر', 'counter_type' => 'Soft Counter', 'reason' => 'Knockback مداوم او می‌تواند گلو را از تیم خود دور کند'],
-        ['counter_hero' => 'Yu Zhong', 'counter_hero_fa' => 'یو ژونگ', 'counter_type' => 'Soft Counter', 'reason' => 'Ultimate او CC Immunity دارد و می‌تواند Split Bodies را Ignore کند'],
+    $counterGroups = [
+        [
+            'group_type' => 'hero',
+            'title_en' => 'Gloo is Weak Against',
+            'title_fa' => 'گلو در برابر این هیروها ضعیف است',
+            'description_en' => 'Heroes with tools to punish Gloo throughout the match.',
+            'description_fa' => 'این هیروها در اکثر فازهای بازی در برابر گلو برتری دارند.',
+            'sort_order' => 1,
+            'entities' => [
+                ['name_en' => 'Yu Zhong', 'name_fa' => 'یو ژونگ'],
+                ['name_en' => 'Lancelot', 'name_fa' => 'لنسلوت'],
+                ['name_en' => 'Faramis', 'name_fa' => 'فارامیس'],
+                ['name_en' => 'Vexana', 'name_fa' => 'وکسنا'],
+                ['name_en' => 'Wanwan', 'name_fa' => 'وان‌وان'],
+            ],
+        ],
+        [
+            'group_type' => 'hero',
+            'title_en' => 'Gloo is Strong Against',
+            'title_fa' => 'گلو در برابر این هیروها قدرتمند است',
+            'description_en' => "Targets that struggle against Gloo's crowd control.",
+            'description_fa' => 'این هیروها در برابر کنترل و دوام گلو مشکل دارند.',
+            'sort_order' => 2,
+            'entities' => [
+                ['name_en' => 'Barats', 'name_fa' => 'باراتس'],
+                ['name_en' => 'Khaleed', 'name_fa' => 'خالد'],
+                ['name_en' => 'Popol and Kupa', 'name_fa' => 'پوپل و کوپا'],
+                ['name_en' => 'Yve', 'name_fa' => 'ایو'],
+                ['name_en' => 'Benedetta', 'name_fa' => 'بنِدتا'],
+            ],
+        ],
+        [
+            'group_type' => 'item',
+            'title_en' => 'Items to Cut Regen',
+            'title_fa' => 'آیتم‌های ضد ریجن',
+            'description_en' => "Pick these to reduce Gloo's regeneration and sustain.",
+            'description_fa' => 'برای کاهش ریجنریشن گلو از این آیتم‌ها استفاده کنید.',
+            'sort_order' => 3,
+            'entities' => [
+                ['name_en' => 'Sea Halberd', 'name_fa' => 'سی هالبرد'],
+                ['name_en' => 'Glowing Wand', 'name_fa' => 'گلوینگ وند'],
+                ['name_en' => 'Dominance Ice', 'name_fa' => 'دومیننس آیس'],
+            ],
+        ],
+        [
+            'group_type' => 'item',
+            'title_en' => 'Items to Pierce Defense',
+            'title_fa' => 'آیتم‌های نفوذ دفاع',
+            'description_en' => 'Armor and magic penetration options to break Gloo down.',
+            'description_fa' => 'برای کاهش دفاع گلو از این آیتم‌ها بهره ببرید.',
+            'sort_order' => 4,
+            'entities' => [
+                ['name_en' => 'Malefic Roar', 'name_fa' => 'میلفیک روار'],
+                ['name_en' => 'Genius Wand', 'name_fa' => 'جینیوس وند'],
+                ['name_en' => 'Divine Glaive', 'name_fa' => 'دی‌واین گلیو'],
+            ],
+        ],
+        [
+            'group_type' => 'item',
+            'title_en' => 'Percent HP Damage Items',
+            'title_fa' => 'آیتم‌های با درصد آسیب HP',
+            'description_en' => 'Items that deal damage based on maximum HP to counter tanks.',
+            'description_fa' => 'این آیتم‌ها با درصدی از جان هدف آسیب می‌زنند و برای مقابله با تانک‌ها عالی هستند.',
+            'sort_order' => 5,
+            'entities' => [
+                ['name_en' => 'Demon Hunter Sword', 'name_fa' => 'دمون هانتر سورد'],
+                ['name_en' => 'Wishing Lantern', 'name_fa' => 'ویشینگ لنترن'],
+            ],
+        ],
     ];
 
-    $counterQuery = "INSERT INTO hero_counters (hero_id, counter_hero, counter_hero_fa, counter_type, reason, reason_en, image_url)
-        VALUES (:hero_id, :counter_hero, :counter_hero_fa, :counter_type, :reason, :reason_en, :image_url)";
+    $groupStmt = $db->prepare('INSERT INTO hero_counter_groups (hero_id, group_type, title_en, title_fa, description_en, description_fa, sort_order)
+        VALUES (:hero_id, :group_type, :title_en, :title_fa, :description_en, :description_fa, :sort_order)');
 
-    $counterStmt = $db->prepare($counterQuery);
-    foreach ($counters as $counter) {
-        $counter['hero_id'] = $heroId;
-        $counter['reason_en'] = $counter['reason'];
-        $counter['image_url'] = null;
-        $counterStmt->execute($counter);
+    $entityStmt = $db->prepare('INSERT INTO hero_counter_entities (group_id, name_en, name_fa, image_url, sort_order)
+        VALUES (:group_id, :name_en, :name_fa, :image_url, :sort_order)');
+
+    foreach ($counterGroups as $group) {
+        $groupData = $group;
+        $entities = $groupData['entities'];
+        unset($groupData['entities']);
+
+        $groupData['hero_id'] = $heroId;
+        $groupStmt->execute($groupData);
+
+        $groupId = (int) $db->lastInsertId();
+        $order = 1;
+        foreach ($entities as $entity) {
+            $entityStmt->execute([
+                ':group_id' => $groupId,
+                ':name_en' => $entity['name_en'],
+                ':name_fa' => $entity['name_fa'],
+                ':image_url' => null,
+                ':sort_order' => $order++,
+            ]);
+        }
     }
 
     $strengths = [

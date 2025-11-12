@@ -34,8 +34,28 @@ try {
     $tipsStmt = $db->prepare('SELECT tip_type, tip_text, tip_text_en, priority FROM hero_tips WHERE hero_id = :hero_id ORDER BY priority DESC, id ASC');
     $tipsStmt->execute([':hero_id' => $id]);
 
-    $countersStmt = $db->prepare('SELECT counter_hero, counter_hero_fa, image_url FROM hero_counters WHERE hero_id = :hero_id ORDER BY id');
-    $countersStmt->execute([':hero_id' => $id]);
+    $counterGroupStmt = $db->prepare('SELECT * FROM hero_counter_groups WHERE hero_id = :hero_id ORDER BY sort_order ASC, id ASC');
+    $counterGroupStmt->execute([':hero_id' => $id]);
+    $counterGroupsRaw = $counterGroupStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $counterGroups = [];
+    if ($counterGroupsRaw) {
+        $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroupsRaw);
+        $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
+        $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+        $entityStmt->execute($groupIds);
+
+        $entitiesByGroup = [];
+        while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
+            $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+        }
+
+        foreach ($counterGroupsRaw as $group) {
+            $groupId = (int) $group['id'];
+            $group['entities'] = $entitiesByGroup[$groupId] ?? [];
+            $counterGroups[] = $group;
+        }
+    }
 
     $strengthStmt = $db->prepare('SELECT strength_text FROM hero_strengths WHERE hero_id = :hero_id ORDER BY id');
     $strengthStmt->execute([':hero_id' => $id]);
@@ -50,7 +70,8 @@ try {
             'skills' => $skillsStmt->fetchAll(),
             'combos' => $combosStmt->fetchAll(),
             'tips' => $tipsStmt->fetchAll(),
-            'counters' => $countersStmt->fetchAll(),
+            'counter_groups' => $counterGroups,
+            'counters' => $counterGroups,
             'strengths' => $strengthStmt->fetchAll(PDO::FETCH_COLUMN),
             'weaknesses' => $weaknessStmt->fetchAll(PDO::FETCH_COLUMN),
         ],

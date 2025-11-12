@@ -113,7 +113,8 @@ try {
                 'hero_skills',
                 'hero_combos',
                 'hero_tips',
-                'hero_counters',
+                'hero_counter_entities',
+                'hero_counter_groups',
                 'hero_strengths',
                 'hero_weaknesses',
             ];
@@ -282,55 +283,125 @@ try {
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'tips');
             break;
 
-        case 'add_counter':
+        case 'add_counter_group':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
-            $imagePath = admin_handle_image_upload('counter_image', 'counters');
-            $manualImage = admin_sanitize($_POST['image_url'] ?? '');
-            $imageUrl = $imagePath ?? $manualImage;
-
-            $stmt = $db->prepare('INSERT INTO hero_counters (hero_id, counter_hero, counter_hero_fa, counter_type, reason, reason_en, image_url)
-                VALUES (:hero_id, :counter_hero, :counter_hero_fa, :counter_type, :reason, :reason_en, :image_url)');
+            $stmt = $db->prepare('INSERT INTO hero_counter_groups (hero_id, group_type, title_en, title_fa, description_en, description_fa, sort_order)
+                VALUES (:hero_id, :group_type, :title_en, :title_fa, :description_en, :description_fa, :sort_order)');
             $stmt->execute([
                 ':hero_id' => $heroId,
-                ':counter_hero' => admin_sanitize($_POST['counter_hero'] ?? ''),
-                ':counter_hero_fa' => admin_sanitize($_POST['counter_hero_fa'] ?? ''),
-                ':counter_type' => admin_sanitize($_POST['counter_type'] ?? ''),
-                ':reason' => $_POST['reason'] ?? '',
-                ':reason_en' => $_POST['reason_en'] !== '' ? $_POST['reason_en'] : ($_POST['reason'] ?? ''),
-                ':image_url' => $imageUrl,
+                ':group_type' => admin_sanitize($_POST['group_type'] ?? 'hero'),
+                ':title_en' => admin_sanitize($_POST['title_en'] ?? ''),
+                ':title_fa' => admin_sanitize($_POST['title_fa'] ?? ''),
+                ':description_en' => ($_POST['description_en'] ?? '') !== '' ? $_POST['description_en'] : null,
+                ':description_fa' => ($_POST['description_fa'] ?? '') !== '' ? $_POST['description_fa'] : null,
+                ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
             ]);
 
-            admin_flash('success', 'کانتر ثبت شد.');
+            admin_flash('success', 'گروه کانتر جدید ثبت شد.');
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
             break;
 
-        case 'update_counter':
+        case 'update_counter_group':
             $heroId = (int) ($_POST['hero_id'] ?? 0);
-            $counterId = (int) ($_POST['counter_id'] ?? 0);
-            $imagePath = admin_handle_image_upload('counter_image', 'counters');
-            $manualImage = admin_sanitize($_POST['image_url'] ?? '');
-            $imageUrl = $imagePath ?? $manualImage;
+            $groupId = (int) ($_POST['group_id'] ?? 0);
 
-            $stmt = $db->prepare('UPDATE hero_counters
-                SET counter_hero = :counter_hero,
-                    counter_hero_fa = :counter_hero_fa,
-                    counter_type = :counter_type,
-                    reason = :reason,
-                    reason_en = :reason_en,
-                    image_url = :image_url
+            $stmt = $db->prepare('UPDATE hero_counter_groups
+                SET group_type = :group_type,
+                    title_en = :title_en,
+                    title_fa = :title_fa,
+                    description_en = :description_en,
+                    description_fa = :description_fa,
+                    sort_order = :sort_order
                 WHERE id = :id AND hero_id = :hero_id');
             $stmt->execute([
-                ':counter_hero' => admin_sanitize($_POST['counter_hero'] ?? ''),
-                ':counter_hero_fa' => admin_sanitize($_POST['counter_hero_fa'] ?? ''),
-                ':counter_type' => admin_sanitize($_POST['counter_type'] ?? ''),
-                ':reason' => $_POST['reason'] ?? '',
-                ':reason_en' => $_POST['reason_en'] !== '' ? $_POST['reason_en'] : ($_POST['reason'] ?? ''),
-                ':image_url' => $imageUrl,
-                ':id' => $counterId,
+                ':group_type' => admin_sanitize($_POST['group_type'] ?? 'hero'),
+                ':title_en' => admin_sanitize($_POST['title_en'] ?? ''),
+                ':title_fa' => admin_sanitize($_POST['title_fa'] ?? ''),
+                ':description_en' => ($_POST['description_en'] ?? '') !== '' ? $_POST['description_en'] : null,
+                ':description_fa' => ($_POST['description_fa'] ?? '') !== '' ? $_POST['description_fa'] : null,
+                ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
+                ':id' => $groupId,
                 ':hero_id' => $heroId,
             ]);
 
-            admin_flash('success', 'کانتر به‌روزرسانی شد.');
+            admin_flash('success', 'گروه کانتر به‌روزرسانی شد.');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
+            break;
+
+        case 'delete_counter_group':
+            $heroId = (int) ($_POST['hero_id'] ?? 0);
+            $groupId = (int) ($_POST['group_id'] ?? 0);
+
+            $stmt = $db->prepare('DELETE FROM hero_counter_groups WHERE id = :id AND hero_id = :hero_id');
+            $stmt->execute([
+                ':id' => $groupId,
+                ':hero_id' => $heroId,
+            ]);
+
+            admin_flash('success', 'گروه کانتر حذف شد.');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
+            break;
+
+        case 'add_counter_entity':
+            $heroId = (int) ($_POST['hero_id'] ?? 0);
+            $groupId = (int) ($_POST['group_id'] ?? 0);
+            $imagePath = admin_handle_image_upload('entity_image', 'counters');
+            $manualImage = admin_sanitize($_POST['image_url'] ?? '');
+            $imageUrl = $imagePath ?? $manualImage;
+
+            $stmt = $db->prepare('INSERT INTO hero_counter_entities (group_id, name_en, name_fa, image_url, sort_order)
+                VALUES (:group_id, :name_en, :name_fa, :image_url, :sort_order)');
+            $stmt->execute([
+                ':group_id' => $groupId,
+                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
+                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':image_url' => $imageUrl,
+                ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
+            ]);
+
+            admin_flash('success', 'آیتم/هیروی کانتر ثبت شد.');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
+            break;
+
+        case 'update_counter_entity':
+            $heroId = (int) ($_POST['hero_id'] ?? 0);
+            $groupId = (int) ($_POST['group_id'] ?? 0);
+            $entityId = (int) ($_POST['entity_id'] ?? 0);
+            $imagePath = admin_handle_image_upload('entity_image', 'counters');
+            $manualImage = admin_sanitize($_POST['image_url'] ?? '');
+            $imageUrl = $imagePath ?? $manualImage;
+
+            $stmt = $db->prepare('UPDATE hero_counter_entities
+                SET name_en = :name_en,
+                    name_fa = :name_fa,
+                    image_url = :image_url,
+                    sort_order = :sort_order
+                WHERE id = :id AND group_id = :group_id');
+            $stmt->execute([
+                ':name_en' => admin_sanitize($_POST['name_en'] ?? ''),
+                ':name_fa' => admin_sanitize($_POST['name_fa'] ?? ''),
+                ':image_url' => $imageUrl,
+                ':sort_order' => (int) ($_POST['sort_order'] ?? 0),
+                ':id' => $entityId,
+                ':group_id' => $groupId,
+            ]);
+
+            admin_flash('success', 'آیتم/هیروی کانتر به‌روزرسانی شد.');
+            admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
+            break;
+
+        case 'delete_counter_entity':
+            $heroId = (int) ($_POST['hero_id'] ?? 0);
+            $groupId = (int) ($_POST['group_id'] ?? 0);
+            $entityId = (int) ($_POST['entity_id'] ?? 0);
+
+            $stmt = $db->prepare('DELETE FROM hero_counter_entities WHERE id = :id AND group_id = :group_id');
+            $stmt->execute([
+                ':id' => $entityId,
+                ':group_id' => $groupId,
+            ]);
+
+            admin_flash('success', 'آیتم/هیروی کانتر حذف شد.');
             admin_redirect($returnTo, ['hero' => $heroId], $anchor ?: 'counters');
             break;
 

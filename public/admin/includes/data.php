@@ -9,7 +9,8 @@ function admin_check_schema(PDO $db): array
         'hero_skills',
         'hero_combos',
         'hero_tips',
-        'hero_counters',
+        'hero_counter_groups',
+        'hero_counter_entities',
         'hero_strengths',
         'hero_weaknesses',
     ];
@@ -43,7 +44,8 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'skills' => 0,
         'combos' => 0,
         'tips' => 0,
-        'counters' => 0,
+        'counter_groups' => 0,
+        'counter_entities' => 0,
         'strengths' => 0,
         'weaknesses' => 0,
     ];
@@ -54,7 +56,8 @@ function admin_fetch_dashboard_stats(PDO $db): array
         'skills' => 'SELECT COUNT(*) FROM hero_skills',
         'combos' => 'SELECT COUNT(*) FROM hero_combos',
         'tips' => 'SELECT COUNT(*) FROM hero_tips',
-        'counters' => 'SELECT COUNT(*) FROM hero_counters',
+        'counter_groups' => 'SELECT COUNT(*) FROM hero_counter_groups',
+        'counter_entities' => 'SELECT COUNT(*) FROM hero_counter_entities',
         'strengths' => 'SELECT COUNT(*) FROM hero_strengths',
         'weaknesses' => 'SELECT COUNT(*) FROM hero_weaknesses',
     ];
@@ -144,9 +147,28 @@ function admin_fetch_hero_bundle(PDO $db, int $heroId): ?array
     $tipStmt->execute([':id' => $heroId]);
     $tips = $tipStmt->fetchAll();
 
-    $counterStmt = $db->prepare('SELECT * FROM hero_counters WHERE hero_id = :id ORDER BY id ASC');
-    $counterStmt->execute([':id' => $heroId]);
-    $counters = $counterStmt->fetchAll();
+    $counterGroupStmt = $db->prepare('SELECT * FROM hero_counter_groups WHERE hero_id = :id ORDER BY sort_order ASC, id ASC');
+    $counterGroupStmt->execute([':id' => $heroId]);
+    $counterGroups = $counterGroupStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $counters = [];
+    if ($counterGroups) {
+        $groupIds = array_map(static fn(array $row): int => (int) $row['id'], $counterGroups);
+        $placeholder = implode(',', array_fill(0, count($groupIds), '?'));
+        $entityStmt = $db->prepare("SELECT * FROM hero_counter_entities WHERE group_id IN ({$placeholder}) ORDER BY sort_order ASC, id ASC");
+        $entityStmt->execute($groupIds);
+
+        $entitiesByGroup = [];
+        while ($entity = $entityStmt->fetch(PDO::FETCH_ASSOC)) {
+            $entitiesByGroup[(int) $entity['group_id']][] = $entity;
+        }
+
+        foreach ($counterGroups as $group) {
+            $groupId = (int) $group['id'];
+            $group['entities'] = $entitiesByGroup[$groupId] ?? [];
+            $counters[] = $group;
+        }
+    }
 
     $strengthStmt = $db->prepare('SELECT * FROM hero_strengths WHERE hero_id = :id ORDER BY id ASC');
     $strengthStmt->execute([':id' => $heroId]);
