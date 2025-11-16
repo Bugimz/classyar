@@ -16,7 +16,21 @@ if (!empty($missingTables)) {
 }
 
 $stats = admin_fetch_dashboard_stats($db);
-$heroes = admin_fetch_heroes($db);
+$filterSearch = admin_sanitize($_GET['search'] ?? '');
+$filterRole = isset($_GET['role_id']) ? (int) $_GET['role_id'] : 0;
+$filterSort = admin_sanitize($_GET['sort'] ?? 'name');
+$allowedSorts = ['name', 'recent', 'oldest'];
+if (!in_array($filterSort, $allowedSorts, true)) {
+    $filterSort = 'name';
+}
+
+$heroFilters = [
+    'search' => $filterSearch,
+    'role_id' => $filterRole,
+    'sort' => $filterSort,
+];
+$roleOptions = admin_fetch_roles($db);
+$heroes = admin_fetch_heroes($db, $heroFilters);
 
 $currentPage = 'dashboard';
 

@@ -121,6 +121,7 @@ $weaknesses = $weaknessStmt->fetchAll(PDO::FETCH_COLUMN);
 
 $allHeroesStmt = $db->query('SELECT id, name_fa FROM heroes ORDER BY name_fa');
 $allHeroes = $allHeroesStmt->fetchAll();
+$heroImageUrl = mlbb_asset_url($hero['image_url'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -177,8 +178,8 @@ $allHeroes = $allHeroesStmt->fetchAll();
                     </div>
                 </div>
                 <div>
-                    <?php if (!empty($hero['image_url'])): ?>
-                        <img src="<?= htmlspecialchars($hero['image_url']) ?>" alt="<?= htmlspecialchars($hero['name_fa']) ?>" style="width:100%;border-radius:24px;box-shadow:0 20px 40px rgba(15,23,42,0.4);">
+                    <?php if ($heroImageUrl !== ''): ?>
+                        <img src="<?= htmlspecialchars($heroImageUrl, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($hero['name_fa']) ?>" style="width:100%;border-radius:24px;box-shadow:0 20px 40px rgba(15,23,42,0.4);">
                     <?php else: ?>
                         <div class="card" style="height:100%;display:flex;align-items:center;justify-content:center;">
                             تصویر برای این هیرو ثبت نشده است
@@ -234,10 +235,7 @@ $allHeroes = $allHeroesStmt->fetchAll();
                                     $stepLabel = $stepNameFa !== '' ? $stepNameFa : ($stepNameEn !== '' ? $stepNameEn : 'مهارت');
                                     $typeLabel = $step['skill_type'] ?? '';
                                     $typeLabel = $typeLabel !== '' ? $typeLabel : '';
-                                    $imageSrc = $step['skill_image_url'] ?? '';
-                                    if ($imageSrc !== '' && !preg_match('#^https?://#i', $imageSrc)) {
-                                        $imageSrc = mlbb_url(ltrim($imageSrc, '/'));
-                                    }
+                                    $imageSrc = mlbb_asset_url($step['skill_image_url'] ?? '');
                                     $initialSource = $stepLabel !== '' ? $stepLabel : ($typeLabel !== '' ? $typeLabel : '?');
                                     $initialChar = function_exists('mb_substr') ? mb_substr($initialSource, 0, 1, 'UTF-8') : substr($initialSource, 0, 1);
                                     ?>
@@ -287,7 +285,7 @@ $allHeroes = $allHeroesStmt->fetchAll();
                                             }
                                             $secondaryName = $entity['display_name_en'] ?? '';
                                             $showSecondary = $secondaryName !== '' && $secondaryName !== $primaryName;
-                                            $imageSrc = $entity['display_image'] ?? '';
+                                            $imageSrc = mlbb_asset_url($entity['display_image'] ?? '');
                                             $linkUrl = null;
                                             if (!empty($entity['target_hero_id'])) {
                                                 $linkUrl = mlbb_url('index.php?id=' . (int) $entity['target_hero_id']);

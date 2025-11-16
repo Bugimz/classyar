@@ -43,7 +43,7 @@ declare(strict_types=1);
             <div class="form-group">
                 <label>تصویر (بارگذاری یا لینک)</label>
                 <input type="file" name="hero_image" accept="image/*">
-                <input type="text" name="image_url" class="form-control" value="<?= htmlspecialchars($hero['image_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="/assets/images/heroes/name.png">
+                <input type="text" name="image_url" class="form-control" value="<?= htmlspecialchars($hero['image_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="/assets/uploads/heroes/name.png">
                 <p class="form-note">در صورت انتخاب فایل، تصویر جایگزین به‌طور خودکار آپلود می‌شود.</p>
             </div>
         </div>

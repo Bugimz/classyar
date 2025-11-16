@@ -364,6 +364,52 @@ body {
     margin-top: 1.5rem;
 }
 
+.hero-filter-toolbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem 1.5rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(37, 99, 235, 0.1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 35px rgba(15, 23, 42, 0.2);
+}
+
+.hero-filter-toolbar label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--admin-muted);
+    margin-bottom: 0.35rem;
+    display: inline-block;
+}
+
+.hero-filter-toolbar .form-control,
+.hero-filter-toolbar select {
+    border-radius: 999px;
+    padding-inline: 1.25rem;
+    background-color: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--admin-text);
+}
+
+.hero-filter-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.link-muted {
+    color: var(--admin-muted);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.link-muted:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
 .combo-steps {
     margin-top: 1.8rem;
     padding-top: 1.4rem;
@@ -433,6 +479,56 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.admin-shortcuts {
+    padding: 1.5rem;
+    border-radius: 28px;
+    background: linear-gradient(120deg, rgba(13, 148, 136, 0.25), rgba(14, 165, 233, 0.25));
+    box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
+    margin-bottom: 2rem;
+}
+
+.shortcut-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.shortcut-item {
+    list-style: none;
+}
+
+.shortcut-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 1.2rem 1rem;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.35);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    min-height: 160px;
+}
+
+.shortcut-item.is-active .shortcut-link,
+.shortcut-link:hover {
+    border-color: rgba(56, 189, 248, 0.8);
+    background: rgba(15, 23, 42, 0.6);
+    transform: translateY(-3px);
+}
+
+.shortcut-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.shortcut-description {
+    font-size: 0.85rem;
+    color: rgba(226, 232, 240, 0.85);
 }
 
 .combo-step-thumb__fallback {

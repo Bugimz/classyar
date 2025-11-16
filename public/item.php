@@ -23,6 +23,8 @@ if (!$item) {
     exit;
 }
 
+$itemImageUrl = mlbb_asset_url($item['image_url'] ?? '');
+
 $categoryItemsStmt = $db->prepare('SELECT id, name_fa, name_en FROM items WHERE category_id = :category_id ORDER BY name_fa ASC, name_en ASC');
 $categoryItemsStmt->execute([':category_id' => $item['category_id']]);
 $categoryItems = $categoryItemsStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,8 +95,8 @@ $referencedHeroes = $counterHeroStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </div>
                 <div>
-                    <?php if (!empty($item['image_url'])): ?>
-                        <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="<?= htmlspecialchars($item['name_fa']) ?>" style="width:100%;border-radius:24px;box-shadow:0 20px 40px rgba(15,23,42,0.4);">
+                    <?php if ($itemImageUrl !== ''): ?>
+                        <img src="<?= htmlspecialchars($itemImageUrl, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($item['name_fa']) ?>" style="width:100%;border-radius:24px;box-shadow:0 20px 40px rgba(15,23,42,0.4);">
                     <?php else: ?>
                         <div class="card" style="height:100%;display:flex;align-items:center;justify-content:center;">برای این آیتم تصویری ثبت نشده است</div>
                     <?php endif; ?>
@@ -120,8 +122,9 @@ $referencedHeroes = $counterHeroStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($referencedHeroes as $heroRow): ?>
                         <a class="counter-entry__link" href="<?= htmlspecialchars(mlbb_url('index.php?id=' . (int) $heroRow['id']), ENT_QUOTES, 'UTF-8') ?>">
                             <figure class="counter-entry">
-                                <?php if (!empty($heroRow['image_url'])): ?>
-                                    <img src="<?= htmlspecialchars($heroRow['image_url'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en'], ENT_QUOTES, 'UTF-8') ?>">
+                                <?php $heroImage = mlbb_asset_url($heroRow['image_url'] ?? ''); ?>
+                                <?php if ($heroImage !== ''): ?>
+                                    <img src="<?= htmlspecialchars($heroImage, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en'], ENT_QUOTES, 'UTF-8') ?>">
                                 <?php endif; ?>
                                 <figcaption>
                                     <span><?= htmlspecialchars($heroRow['name_fa'] ?? $heroRow['name_en'], ENT_QUOTES, 'UTF-8') ?></span>

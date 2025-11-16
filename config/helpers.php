@@ -9,8 +9,14 @@ if (!function_exists('mlbb_public_base_path')) {
             array_pop($segments);
         }
 
-        if (!empty($segments) && end($segments) === 'admin') {
-            array_pop($segments);
+        while (!empty($segments)) {
+            $last = end($segments);
+            if (in_array($last, ['admin', 'api'], true)) {
+                array_pop($segments);
+                continue;
+            }
+
+            break;
         }
 
         if (empty($segments)) {
@@ -42,5 +48,24 @@ if (!function_exists('mlbb_public_base_path')) {
         $trimPath = ltrim($path, '/');
 
         return $trimPath === '' ? $adminBase . '/' : $adminBase . '/' . $trimPath;
+    }
+
+    function mlbb_asset_url(?string $path): string
+    {
+        if ($path === null) {
+            return '';
+        }
+
+        $normalized = trim($path);
+
+        if ($normalized === '') {
+            return '';
+        }
+
+        if (preg_match('#^https?://#i', $normalized)) {
+            return $normalized;
+        }
+
+        return mlbb_url(ltrim($normalized, '/'));
     }
 }

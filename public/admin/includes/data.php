@@ -117,14 +117,49 @@ function admin_fetch_dashboard_stats(PDO $db): array
     return $stats;
 }
 
-function admin_fetch_heroes(PDO $db): array
+function admin_fetch_heroes(PDO $db, array $filters = []): array
 {
+    $search = trim((string) ($filters['search'] ?? ''));
+    $roleId = isset($filters['role_id']) ? (int) $filters['role_id'] : 0;
+    $sort = (string) ($filters['sort'] ?? 'name');
+    $sort = in_array($sort, ['recent', 'oldest', 'name'], true) ? $sort : 'name';
+
+    $conditions = [];
+    $params = [];
+
+    if ($search !== '') {
+        $conditions[] = '(h.name_fa LIKE :search OR h.name_en LIKE :search)';
+        $params[':search'] = '%' . $search . '%';
+    }
+
+    if ($roleId > 0) {
+        $conditions[] = 'h.role_id = :role_id';
+        $params[':role_id'] = $roleId;
+    }
+
+    $orderClause = 'ORDER BY h.name_fa ASC, h.id ASC';
+    if ($sort === 'recent') {
+        $orderClause = 'ORDER BY h.updated_at DESC, h.id DESC';
+    } elseif ($sort === 'oldest') {
+        $orderClause = 'ORDER BY h.created_at ASC, h.id ASC';
+    }
+
     $sql = 'SELECT h.id, h.name_fa, h.name_en, h.image_url, r.name_fa AS role_name
             FROM heroes h
-            LEFT JOIN hero_roles r ON r.id = h.role_id
-            ORDER BY h.name_fa ASC, h.id ASC';
+            LEFT JOIN hero_roles r ON r.id = h.role_id';
 
-    $stmt = $db->query($sql);
+    if (!empty($conditions)) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+
+    $sql .= ' ' . $orderClause;
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $paramType = $key === ':role_id' ? PDO::PARAM_INT : PDO::PARAM_STR;
+        $stmt->bindValue($key, $value, $paramType);
+    }
+    $stmt->execute();
     $heroes = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
     if (empty($heroes)) {

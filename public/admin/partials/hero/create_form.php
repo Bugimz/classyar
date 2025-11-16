@@ -46,7 +46,7 @@ declare(strict_types=1);
             <div class="form-group">
                 <label>تصویر (بارگذاری یا لینک)</label>
                 <input type="file" name="hero_image" accept="image/*">
-                <input type="text" name="image_url" class="form-control" placeholder="/assets/images/heroes/name.png">
+                <input type="text" name="image_url" class="form-control" placeholder="/assets/uploads/heroes/name.png">
                 <p class="form-note">در صورت آپلود، مسیر ذخیره به‌صورت خودکار ثبت می‌شود.</p>
             </div>
         </div>

@@ -13,6 +13,44 @@ declare(strict_types=1);
         </div>
     </div>
 
+    <?php
+        $filterValues = $heroFilters ?? ['search' => '', 'role_id' => 0, 'sort' => 'name'];
+        $filterRoles = $roleOptions ?? [];
+        $activeFilters = trim((string) ($filterValues['search'] ?? '')) !== ''
+            || (int) ($filterValues['role_id'] ?? 0) > 0
+            || (($filterValues['sort'] ?? 'name') !== 'name');
+    ?>
+
+    <form method="get" action="<?= htmlspecialchars(mlbb_admin_url('index.php'), ENT_QUOTES, 'UTF-8') ?>" class="hero-filter-toolbar" novalidate>
+        <div class="form-group">
+            <label for="filter-search">جستجوی نام</label>
+            <input type="search" name="search" id="filter-search" class="form-control" value="<?= htmlspecialchars($filterValues['search'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="نام فارسی یا انگلیسی">
+        </div>
+        <div class="form-group">
+            <label for="filter-role">فیلتر رول</label>
+            <select name="role_id" id="filter-role" class="form-control">
+                <option value="0">همه نقش‌ها</option>
+                <?php foreach ($filterRoles as $role): ?>
+                    <option value="<?= (int) $role['id'] ?>" <?= ((int) ($filterValues['role_id'] ?? 0) === (int) $role['id']) ? 'selected' : '' ?>><?= htmlspecialchars($role['name_fa'] ?? $role['name_en'], ENT_QUOTES, 'UTF-8') ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-sort">مرتب‌سازی</label>
+            <select name="sort" id="filter-sort" class="form-control">
+                <option value="name" <?= (($filterValues['sort'] ?? 'name') === 'name') ? 'selected' : '' ?>>الفبایی</option>
+                <option value="recent" <?= (($filterValues['sort'] ?? 'name') === 'recent') ? 'selected' : '' ?>>آخرین بروزرسانی</option>
+                <option value="oldest" <?= (($filterValues['sort'] ?? 'name') === 'oldest') ? 'selected' : '' ?>>قدیمی‌ترین ثبت</option>
+            </select>
+        </div>
+        <div class="form-group hero-filter-actions">
+            <button type="submit" class="primary">اعمال فیلتر</button>
+            <?php if ($activeFilters): ?>
+                <a class="link-muted" href="<?= htmlspecialchars(mlbb_admin_url('index.php'), ENT_QUOTES, 'UTF-8') ?>">پاکسازی</a>
+            <?php endif; ?>
+        </div>
+    </form>
+
     <?php if (empty($heroes)): ?>
         <p class="empty-state">هنوز هیرویی ثبت نشده است. از منوی بالا گزینه «افزودن هیرو» را انتخاب کنید.</p>
     <?php else: ?>

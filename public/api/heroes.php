@@ -1,23 +1,97 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
+declare(strict_types=1);
 
-require_once __DIR__ . '/../../config/database.php';
+require __DIR__ . '/bootstrap.php';
 
 try {
-    $database = new Database();
-    $db = $database->getConnection();
+    $db = api_db();
 
-    $stmt = $db->query('SELECT h.id, h.name_en, h.name_fa, h.image_url, r.name_en AS role_en, r.name_fa AS role_fa FROM heroes h JOIN hero_roles r ON h.role_id = r.id ORDER BY h.name_fa');
-    $heroes = $stmt->fetchAll();
+    $page = max(1, (int) ($_GET['page'] ?? 1));
+    $perPage = (int) ($_GET['per_page'] ?? 20);
+    $perPage = max(5, min(100, $perPage));
+    $offset = ($page - 1) * $perPage;
 
-    echo json_encode([
-        'status' => 'success',
-        'data' => $heroes,
-    ], JSON_UNESCAPED_UNICODE);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'message' => $e->getMessage(),
-    ], JSON_UNESCAPED_UNICODE);
+    $search = trim((string) ($_GET['search'] ?? ''));
+    $roleId = isset($_GET['role_id']) ? (int) $_GET['role_id'] : 0;
+    $sort = (string) ($_GET['sort'] ?? 'name');
+    $sort = in_array($sort, ['recent', 'oldest', 'name'], true) ? $sort : 'name';
+
+    $includeTokens = array_values(array_filter(array_map('trim', explode(',', (string) ($_GET['include'] ?? '')))));
+    $includeStats = in_array('stats', $includeTokens, true);
+
+    $conditions = [];
+    $params = [];
+
+    if ($search !== '') {
+        $conditions[] = '(h.name_fa LIKE :search OR h.name_en LIKE :search)';
+        $params[':search'] = '%' . $search . '%';
+    }
+
+    if ($roleId > 0) {
+        $conditions[] = 'h.role_id = :role_id';
+        $params[':role_id'] = $roleId;
+    }
+
+    $whereSql = empty($conditions) ? '' : ' WHERE ' . implode(' AND ', $conditions);
+
+    $countStmt = $db->prepare('SELECT COUNT(*) FROM heroes h' . $whereSql);
+    foreach ($params as $key => $value) {
+        $paramType = $key === ':role_id' ? PDO::PARAM_INT : PDO::PARAM_STR;
+        $countStmt->bindValue($key, $value, $paramType);
+    }
+    $countStmt->execute();
+    $total = (int) $countStmt->fetchColumn();
+
+    $orderClause = 'ORDER BY h.name_fa ASC, h.id ASC';
+    if ($sort === 'recent') {
+        $orderClause = 'ORDER BY h.updated_at DESC, h.id DESC';
+    } elseif ($sort === 'oldest') {
+        $orderClause = 'ORDER BY h.created_at ASC, h.id ASC';
+    }
+
+    $sql = 'SELECT h.id, h.name_en, h.name_fa, h.image_url, h.specialty, h.difficulty, h.role_id, r.name_en AS role_name_en, r.name_fa AS role_name_fa
+            FROM heroes h
+            LEFT JOIN hero_roles r ON r.id = h.role_id'
+        . $whereSql . ' ' . $orderClause . ' LIMIT :limit OFFSET :offset';
+
+    $stmt = $db->prepare($sql);
+    foreach ($params as $key => $value) {
+        $paramType = $key === ':role_id' ? PDO::PARAM_INT : PDO::PARAM_STR;
+        $stmt->bindValue($key, $value, $paramType);
+    }
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $heroes = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $heroes[] = api_transform_hero_summary($row);
+    }
+
+    if ($includeStats && !empty($heroes)) {
+        $heroIds = array_map(static fn(array $row): int => $row['id'], $heroes);
+        $statsByHero = api_fetch_hero_stats($db, $heroIds);
+
+        foreach ($heroes as &$heroRow) {
+            $heroRow['metrics'] = $statsByHero[$heroRow['id']] ?? [
+                'skills' => 0,
+                'combos' => 0,
+                'tips' => 0,
+                'counter_groups' => 0,
+            ];
+        }
+        unset($heroRow);
+    }
+
+    $meta = api_paginate_meta($total, $page, $perPage);
+    $meta['filters'] = [
+        'search' => $search,
+        'role_id' => $roleId,
+        'sort' => $sort,
+        'include' => $includeTokens,
+    ];
+
+    api_success($heroes, $meta);
+} catch (Throwable $e) {
+    api_error('خطای غیرمنتظره در پردازش درخواست رخ داد.', 500);
 }

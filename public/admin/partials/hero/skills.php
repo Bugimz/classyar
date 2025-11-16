@@ -53,7 +53,7 @@ $skills = $activeHeroBundle['skills'];
                 <div class="form-group">
                     <label>تصویر مهارت</label>
                     <input type="file" name="skill_image" accept="image/*">
-                    <input type="text" name="image_url" class="form-control" value="<?= htmlspecialchars($skill['image_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="/assets/images/skills/name.png">
+                    <input type="text" name="image_url" class="form-control" value="<?= htmlspecialchars($skill['image_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="/assets/uploads/skills/name.png">
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="secondary-button">ذخیره تغییرات</button>
@@ -109,7 +109,7 @@ $skills = $activeHeroBundle['skills'];
         <div class="form-group">
             <label>تصویر مهارت</label>
             <input type="file" name="skill_image" accept="image/*">
-            <input type="text" name="image_url" class="form-control" placeholder="/assets/images/skills/new.png">
+            <input type="text" name="image_url" class="form-control" placeholder="/assets/uploads/skills/new.png">
         </div>
         <div class="form-actions">
             <button type="submit" class="primary">ثبت مهارت</button>
