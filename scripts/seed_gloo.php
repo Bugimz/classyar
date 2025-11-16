@@ -60,7 +60,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Punish: حملات معمولی، سپر و ریجن هدف را به مدت ۳ ثانیه ۵۰٪ کاهش می‌دهد.',
             'description_en' => 'Anti-regen tool to counter durable heroes.',
             'description_fa' => 'ابزاری ضد ریجن برای مقابله با هیروهای مقاوم.',
-            'image_url' => '/assets/images/items/sea_halberd.png',
+            'image_url' => '/assets/uploads/items/sea_halberd.png',
         ],
         [
             'slug' => 'glowing-wand',
@@ -75,7 +75,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Scorch: مهارت‌ها، هدف را به مدت ۳ ثانیه سوزانده و بر اساس HP، آسیب جادویی وارد می‌کنند.',
             'description_en' => 'Burns tanks with percent HP damage over time.',
             'description_fa' => 'تانک‌ها را با آسیب تدریجی درصدی می‌سوزاند.',
-            'image_url' => '/assets/images/items/glowing_wand.png',
+            'image_url' => '/assets/uploads/items/glowing_wand.png',
         ],
         [
             'slug' => 'dominance-ice',
@@ -90,7 +90,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Arctic Cold: ریجن و سپر دشمنان اطراف را ۵۰٪ کاهش می‌دهد.',
             'description_en' => 'Classic anti-heal aura against sustain heroes.',
             'description_fa' => 'آیتم هاله‌ای برای کاهش ریجن دشمنان.',
-            'image_url' => '/assets/images/items/dominance_ice.png',
+            'image_url' => '/assets/uploads/items/dominance_ice.png',
         ],
         [
             'slug' => 'malefic-roar',
@@ -105,7 +105,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Armor Buster: ۳۵٪ نفوذ زره و نفوذ اضافی در برابر سازه‌ها.',
             'description_en' => 'Essential armor penetration for marksmen and fighters.',
             'description_fa' => 'نفوذ زره مهم برای مارکسمن‌ها و فایترها.',
-            'image_url' => '/assets/images/items/malefic_roar.png',
+            'image_url' => '/assets/uploads/items/malefic_roar.png',
         ],
         [
             'slug' => 'genius-wand',
@@ -120,7 +120,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Magic: وارد کردن آسیب، دفاع جادویی دشمن را ۳ تا ۱۰ واحد به مدت ۲ ثانیه کاهش می‌دهد (تا ۳ بار).',
             'description_en' => 'Magic penetration stick for burst mages.',
             'description_fa' => 'چوب نفوذ جادویی برای مِیج‌های بَرسْت.',
-            'image_url' => '/assets/images/items/genius_wand.png',
+            'image_url' => '/assets/uploads/items/genius_wand.png',
         ],
         [
             'slug' => 'divine-glaive',
@@ -135,7 +135,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Spellbreaker: به ازای هر واحد دفاع جادو دشمن، ۰٫۱٪ نفوذ جادو می‌گیرد.',
             'description_en' => 'High penetration for late-game mages.',
             'description_fa' => 'نفوذ جادویی بالا برای مِیج‌های لِیت‌گیم.',
-            'image_url' => '/assets/images/items/divine_glaive.png',
+            'image_url' => '/assets/uploads/items/divine_glaive.png',
         ],
         [
             'slug' => 'demon-hunter-sword',
@@ -150,7 +150,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Devour: حملات معمولی، ۹٪ از جان فعلی هدف را به‌صورت آسیب اضافی وارد می‌کنند.',
             'description_en' => 'Percent HP damage to melt tanks.',
             'description_fa' => 'آسیب درصدی برای ذوب کردن تانک‌ها.',
-            'image_url' => '/assets/images/items/demon_hunter_sword.png',
+            'image_url' => '/assets/uploads/items/demon_hunter_sword.png',
         ],
         [
             'slug' => 'wishing-lantern',
@@ -165,7 +165,7 @@ try {
             'passive_fa' => 'پسیو یکتا - Devotion & Thriving: طلای مشترک با تیم و افزایش اثرات حمایتی.',
             'description_en' => 'Roaming blessing lantern that scales with assists.',
             'description_fa' => 'آیتم رووم با تمرکز بر حمایت و امتیازات تیمی.',
-            'image_url' => '/assets/images/items/wishing_lantern.png',
+            'image_url' => '/assets/uploads/items/wishing_lantern.png',
         ],
     ];
 

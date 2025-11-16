@@ -917,6 +917,108 @@ input[type="file"] {
     color: var(--admin-muted);
 }
 
+.badge-gold {
+    background: rgba(234, 179, 8, 0.18);
+    color: #fbbf24;
+    gap: 0.2rem;
+}
+
+.badge-gold span {
+    font-weight: 500;
+}
+
+.item-card-grid {
+    display: grid;
+    gap: 1.4rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.item-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 22px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.55));
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), transparent);
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.item-card:hover {
+    border-color: rgba(59, 130, 246, 0.45);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.35);
+}
+
+.item-card-media {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+}
+
+.item-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.item-card-placeholder {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--admin-muted);
+}
+
+.item-card-body {
+    flex: 1 1 auto;
+    min-width: 160px;
+}
+
+.item-card-title {
+    margin: 0 0 0.35rem 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.item-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.item-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.item-card-actions form {
+    margin: 0;
+}
+
 .hero-card-actions {
     display: flex;
     gap: 0.45rem;

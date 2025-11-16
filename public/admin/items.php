@@ -17,6 +17,8 @@ if (!empty($missingTables)) {
 
 $itemCategories = admin_fetch_item_categories($db);
 $items = admin_fetch_items($db);
+$editItemId = isset($_GET['item']) ? (int) $_GET['item'] : 0;
+$editItem = $editItemId > 0 ? admin_fetch_item($db, $editItemId) : null;
 
 $currentPage = 'items';
 

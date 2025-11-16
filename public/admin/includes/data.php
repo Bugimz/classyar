@@ -58,6 +58,25 @@ function admin_fetch_items(PDO $db): array
     return $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 }
 
+function admin_fetch_item(PDO $db, int $itemId): ?array
+{
+    if ($itemId <= 0) {
+        return null;
+    }
+
+    $sql = 'SELECT i.*, c.name_fa AS category_name_fa, c.name_en AS category_name_en
+            FROM items i
+            LEFT JOIN item_categories c ON c.id = i.category_id
+            WHERE i.id = :id';
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':id' => $itemId]);
+
+    $item = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $item ?: null;
+}
+
 function admin_fetch_dashboard_stats(PDO $db): array
 {
     $stats = [
