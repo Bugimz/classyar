@@ -97,7 +97,14 @@ if ($counterGroupsRaw) {
 
         $entity['display_name_fa'] = $entity['name_fa'] ?: ($entity['hero_name_fa'] ?? ($entity['item_name_fa'] ?? null));
         $entity['display_name_en'] = $entity['name_en'] ?: ($entity['hero_name_en'] ?? ($entity['item_name_en'] ?? null));
-        $entity['display_image'] = $entity['image_url'] ?: ($entity['hero_image_url'] ?? ($entity['item_image_url'] ?? null));
+
+        if (!empty($entity['target_item_id']) && !empty($entity['item_image_url'])) {
+            $entity['display_image'] = $entity['item_image_url'];
+        } elseif (!empty($entity['target_hero_id']) && !empty($entity['hero_image_url'])) {
+            $entity['display_image'] = $entity['hero_image_url'];
+        } else {
+            $entity['display_image'] = $entity['image_url'] ?? null;
+        }
         $entity['item_category_name_fa'] = $entity['item_category_name_fa'] ?? null;
         $entity['item_category_name_en'] = $entity['item_category_name_en'] ?? null;
 
